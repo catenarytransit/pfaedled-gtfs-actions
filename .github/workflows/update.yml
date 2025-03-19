@@ -63,7 +63,7 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
-      - name: Optional: Display uploaded assets
+      - name:  Display uploaded assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.get_tag.outputs.RELEASE_TAG }}
