@@ -1,0 +1,73 @@
+name: Update Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: apt install unzip zip
+
+      - name: Build Pfaedle
+        run: |
+          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+          cd pfaedle
+          mkdir build && cd build
+          cmake ..
+          make -j
+          cd ..
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.bz2
+
+      - name: Unzip Ile de France
+        run: bzip2 -d ile-de-france-latest.osm.bz2
+
+      - name: Download zip of ile de france gtfs
+        run: wget https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip
+
+      - name: Unzip of ile de france gtfs
+        run: |
+          mkdir IDFM-gtfs
+          unzip IDFM-gtfs.zip -D IDFM-gtfs
+
+      - name: Run Ile de france pfaedle
+        run: ./build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
+
+      - name: Zip the resulting GTFS
+        run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
+
+      - name: Get release tag
+        id: get_tag
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Upload Asset Ile De France
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASSET_PATH: IDFM-gtfs-pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: IDFM-gtfs-pfaedle.zip      # Replace with the desired name of the asset
+          RELEASE_TAG: ${{ steps.get_tag.outputs.RELEASE_TAG }}
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release $RELEASE_TAG"
+          gh release upload "$RELEASE_TAG" "$ASSET_PATH" --name "$ASSET_NAME"
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+
+      - name: Optional: Display uploaded assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.get_tag.outputs.RELEASE_TAG }}
+        run: |
+          echo "Uploaded assets for release $RELEASE_TAG:"
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets| {name: .name, size: .size}'
+        shell: bash
