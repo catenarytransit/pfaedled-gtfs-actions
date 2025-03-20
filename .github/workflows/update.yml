@@ -67,7 +67,7 @@ jobs:
           echo $(pwd)
           echo "ls"
           ls
-          ./pfaedle/build/pfaedle -x guangdong-latest.osm.bz2 IDFM-gtfs
+          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
 
       - name: Zip the resulting GTFS Ile de France
         run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
@@ -77,7 +77,7 @@ jobs:
 
       - name: Run Hong Kong pfaedle
         run: |
-          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm hk_gtfs
+          ./pfaedle/build/pfaedle -x guangdong-latest.osm hk_gtfs
 
       - name: Zip the resulting GTFS Hong Kong
         run: zip -r hk-gtfs-pfaedle.zip gtfs-out
