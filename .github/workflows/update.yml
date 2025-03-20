@@ -57,7 +57,7 @@ jobs:
           ls
           ./pfaedle/build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
 
-      - name: Zip the resulting GTFS
+      - name: Zip the resulting GTFS Ile de France
         run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
 
       - name: Upload Asset Ile De France
