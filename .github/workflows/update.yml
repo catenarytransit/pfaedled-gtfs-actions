@@ -72,13 +72,3 @@ jobs:
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
-
-      - name:  Display uploaded assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploaded assets for release $RELEASE_TAG:"
-          gh release view "latest" --json assets --jq '.assets| {name: .name, size: .size}'
-        shell: bash
