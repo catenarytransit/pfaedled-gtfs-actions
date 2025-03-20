@@ -39,7 +39,7 @@ jobs:
       - name: Unzip of ile de france gtfs
         run: |
           mkdir IDFM-gtfs
-          unzip IDFM-gtfs.zip -D IDFM-gtfs
+          unzip IDFM-gtfs.zip -d IDFM-gtfs
 
       - name: Run Ile de france pfaedle
         run: ./build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
