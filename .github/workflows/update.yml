@@ -60,27 +60,23 @@ jobs:
       - name: Zip the resulting GTFS
         run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
 
-      - name: Get release tag
-        id: get_tag
-        run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
       - name: Upload Asset Ile De France
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           ASSET_PATH: IDFM-gtfs-pfaedle.zip # Replace with the actual path to your file
           ASSET_NAME: IDFM-gtfs-pfaedle.zip      # Replace with the desired name of the asset
-          RELEASE_TAG: ${{ steps.get_tag.outputs.RELEASE_TAG }}
+          RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release $RELEASE_TAG"
-          gh release upload "$RELEASE_TAG" "$ASSET_PATH" --name "$ASSET_NAME"
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
       - name:  Display uploaded assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          RELEASE_TAG: ${{ steps.get_tag.outputs.RELEASE_TAG }}
+          RELEASE_TAG: latest
         run: |
           echo "Uploaded assets for release $RELEASE_TAG:"
-          gh release view "$RELEASE_TAG" --json assets --jq '.assets| {name: .name, size: .size}'
+          gh release view "latest" --json assets --jq '.assets| {name: .name, size: .size}'
         shell: bash
