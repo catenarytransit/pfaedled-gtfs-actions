@@ -63,6 +63,7 @@ jobs:
       - name: Upload Asset Ile De France
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           ASSET_PATH: IDFM-gtfs-pfaedle.zip # Replace with the actual path to your file
           ASSET_NAME: IDFM-gtfs-pfaedle.zip      # Replace with the desired name of the asset
           RELEASE_TAG: latest
@@ -75,6 +76,7 @@ jobs:
       - name:  Display uploaded assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: latest
         run: |
           echo "Uploaded assets for release $RELEASE_TAG:"
