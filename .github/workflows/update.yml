@@ -26,6 +26,13 @@ jobs:
           make -j
           cd ..
 
+      - name: Current dir
+        run: |
+          echo "current dir"
+          echo $(pwd)
+          echo "ls"
+          ls
+
       - name: Download osm files
         run: |
           wget https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.bz2
@@ -42,7 +49,12 @@ jobs:
           unzip IDFM-gtfs.zip -d IDFM-gtfs
 
       - name: Run Ile de france pfaedle
-        run: ./build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
+        run: |
+          echo "current dir"
+          echo $(pwd)
+          echo "ls"
+          ls
+          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
 
       - name: Zip the resulting GTFS
         run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
