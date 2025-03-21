@@ -44,7 +44,7 @@ jobs:
           wget https://download.geofabrik.de/north-america/us/california/socal-latest.osm.pbf
           wget https://download.geofabrik.de/europe/portugal-latest.osm.pbf
 
-      - name: Filter Socal rail entwork
+      - name: Filter Portugal
         run: |
           osmium tags-filter -o railonly-portugal-latest.osm.pbf --expressions=railway-filter.txt portugal-latest.osm.pbf
           
