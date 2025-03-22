@@ -43,6 +43,7 @@ jobs:
           wget https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf
           wget https://download.geofabrik.de/north-america/us/california/socal-latest.osm.pbf
           wget https://download.geofabrik.de/europe/portugal-latest.osm.pbf
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
 
       - name: Filter Portugal
         run: |
@@ -58,9 +59,35 @@ jobs:
           osmconvert ile-de-france-latest.osm.pbf -o=ile-de-france-latest.osm
           osmconvert guangdong-latest.osm.pbf -o=guangdong-latest.osm
           osmconvert railonly-portugal-latest.osm.pbf -o=railonly-portugal-latest.osm
+          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 
       - name: Download zip of ile de france gtfs
         run: wget https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip
+
+      - name: Download SNCF Voyages
+        run: wget https://eu.ftp.opendatasoft.com/sncf/gtfs/export_gtfs_voyages.zip
+
+      - name: Extract SNCF Voyages
+        run: unzip export_gtfs_voyages.zip -d export_gtfs_voyages
+
+      - name: Run pfaedle SNCF voyages
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm export_gtfs_voyages -o export_gtfs_voyages_pfaedle
+
+      - name: Zip pfaedle SNCF Voyages
+        run: zip -r export_gtfs_voyages_pfaedle.zip export_gtfs_voyages_pfaedle
+
+      - name: Upload SNCF Voyages results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: export_gtfs_voyages_pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: export_gtfs_voyages_pfaedle.zip # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
       - name: Download Hong Kong GTFS
         run: wget https://static.data.gov.hk/td/pt-headway-tc/gtfs.zip -O hk_gtfs.zip
@@ -74,7 +101,7 @@ jobs:
       - name: Unzip PC GTFS
         run: unzip pc_gtfs.zip -d pc_gtfs
 
-      - name: Run pfaedle
+      - name: Run pfaedle Portugal
         run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -o pc_gtfs_pfaedle
 
       - name: Zip PC results
