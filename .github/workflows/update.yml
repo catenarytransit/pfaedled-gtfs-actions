@@ -142,8 +142,14 @@ jobs:
       - name: Download PC GTFS
         run: wget https://publico.cp.pt/gtfs/gtfs.zip -O pc_gtfs.zip
 
+      - name: Download Renfe Operadora
+        run: wget https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip -O renfe_operadora.zip
+
       - name: Unzip PC GTFS
         run: unzip pc_gtfs.zip -d pc_gtfs
+
+      - name: Unzip renfe operadora
+        run: unzip renfe_operadora.zip -d renfe_operadora
 
       - name: Run pfaedle Portugal
         run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -o pc_gtfs_pfaedle
@@ -163,6 +169,25 @@ jobs:
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+
+      - name: Run pfaedle renfe operadora
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -o renfe_operadora_pfaedle
+
+      - name: Zip renfe operadora results
+        run: zip -r renfe_operadora_pfaedle.zip renfe_operadora_pfaedle
+
+      - name: Upload Renfe Operadora
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: renfe_operadora_pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: renfe_operadora_pfaedle.zip # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''        
 
       - name: Unzip Metrolink GTFS
         run: |
