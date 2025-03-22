@@ -65,7 +65,7 @@ jobs:
         run: wget https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip
 
       - name: Download SNCF Voyages
-        run: wget https://eu.ftp.opendatasoft.com/sncf/gtfs/export_gtfs_voyages.zip
+        run: wget https://eu.ftp.opendatasoft.com/sncf/plandata/export_gtfs_voyages.zip
 
       - name: Extract SNCF Voyages
         run: unzip export_gtfs_voyages.zip -d export_gtfs_voyages
