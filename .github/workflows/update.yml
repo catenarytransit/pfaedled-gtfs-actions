@@ -72,7 +72,7 @@ jobs:
       - name: Extract SNCF Voyages
         run: |
           unzip export_gtfs_voyages.zip -d export_gtfs_voyages
-          unzip sncf_intercites -d export-intercites-gtfs-last.zip
+          unzip export-intercites-gtfs-last.zip -d sncf_intercites 
 
       - name: Run pfaedle SNCF voyages
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm export_gtfs_voyages -o export_gtfs_voyages_pfaedle
