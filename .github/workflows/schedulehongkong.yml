@@ -1,0 +1,13 @@
+name: Update Scheduled
+
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  call-update:
+    uses: ./.github/workflows/hongkongupdate.yml
