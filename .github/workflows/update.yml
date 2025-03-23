@@ -40,7 +40,6 @@ jobs:
       - name: Download osm files
         run: |
           wget https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
-          wget https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf
           wget https://download.geofabrik.de/north-america/us/california/socal-latest.osm.pbf
           wget https://download.geofabrik.de/europe/portugal-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
@@ -133,8 +132,8 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
-      - name: Download Hong Kong GTFS
-        run: wget https://static.data.gov.hk/td/pt-headway-tc/gtfs.zip -O hk_gtfs.zip
+      - name: Download SNCB GTFS
+        run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip
 
       - name: Download metrolink gtfs
         run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
@@ -147,6 +146,9 @@ jobs:
 
       - name: Unzip PC GTFS
         run: unzip pc_gtfs.zip -d pc_gtfs
+
+      - name: SNCB GTFS
+        run: unzip sncb_gtfs.zip -d sncb_gtfs
 
       - name: Unzip renfe operadora
         run: unzip renfe_operadora.zip -d renfe_operadora
@@ -169,6 +171,25 @@ jobs:
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+      
+      - name: Run pfaedle SNCB
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -o sncb_gtfs_pfaedle
+
+      - name: Zip SNCF pfaedle result
+        run: zip -r sncb_gtfs_pfaedle.zip sncb_gtfs_pfaedle
+
+      - name: Upload SNCB result
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: sncb_gtfs_pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: sncb_gtfs_pfaedle.zip # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''     
 
       - name: Run pfaedle renfe operadora
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -o renfe_operadora_pfaedle
@@ -199,11 +220,6 @@ jobs:
           mkdir IDFM-gtfs
           unzip IDFM-gtfs.zip -d IDFM-gtfs
 
-      - name: Unzip of HK gtfs
-        run: |
-          mkdir hk_gtfs
-          unzip hk_gtfs.zip -d hk_gtfs
-
       - name: Run Metrolink pfaedle
         run: |
           ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs
@@ -220,16 +236,6 @@ jobs:
 
       - name: Zip the resulting GTFS Ile de France
         run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
-
-      - name: Remove old folder
-        run: rm -rf gtfs-out
-
-      - name: Run Hong Kong pfaedle
-        run: |
-          ./pfaedle/build/pfaedle -x guangdong-latest.osm hk_gtfs
-
-      - name: Zip the resulting GTFS Hong Kong
-        run: zip -r hk-gtfs-pfaedle.zip gtfs-out
 
       - name: Upload Metrolink Asset
         env:
@@ -250,19 +256,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: IDFM-gtfs-pfaedle.zip # Replace with the actual path to your file
           ASSET_NAME: IDFM-gtfs-pfaedle.zip      # Replace with the desired name of the asset
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
-
-      - name: Upload Asset Hong Kong
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: hk-gtfs-pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: hk-gtfs-pfaedle.zip      # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
           echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
