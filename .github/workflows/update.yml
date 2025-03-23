@@ -75,22 +75,22 @@ jobs:
           unzip export-ter-gtfs-last.zip -d sncf_ter
 
       - name: Run pfaedle SNCF voyages
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm export_gtfs_voyages -o export_gtfs_voyages_pfaedle
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm export_gtfs_voyages  -F --inplace
 
       - name: Run pfaedle SNCF intercites
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_intercites -o sncf_intercites_pfaedle
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_intercites  -F --inplace
 
       - name: Run pfaedle SNCF TER
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_ter -o sncf_ter_pfaedle
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_ter -F --inplace
 
       - name: Zip pfaedle SNCF Voyages
-        run: zip -r export_gtfs_voyages_pfaedle.zip export_gtfs_voyages_pfaedle
+        run: zip -r export_gtfs_voyages_pfaedle.zip export_gtfs_voyages
 
       - name: Zip pfaedle SNCF intercites
-        run: zip -r sncf_intercites_pfaedle.zip sncf_intercites_pfaedle
+        run: zip -r sncf_intercites_pfaedle.zip sncf_intercites
 
       - name: Zip pfaedle SNCF TER
-        run: zip -r sncf_ter_pfaedle.zip sncf_ter_pfaedle
+        run: zip -r sncf_ter_pfaedle.zip sncf_ter
 
       - name: Upload SNCF Voyages results
         env:
@@ -153,10 +153,10 @@ jobs:
         run: unzip renfe_operadora.zip -d renfe_operadora
 
       - name: Run pfaedle Portugal
-        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -o pc_gtfs_pfaedle
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -F --inplace
 
       - name: Zip PC results
-        run: zip -r pc_gtfs_pfaedle.zip pc_gtfs_pfaedle
+        run: zip -r pc_gtfs_pfaedle.zip pc_gtfs
 
       - name: Upload PC results
         env:
@@ -172,10 +172,10 @@ jobs:
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
       
       - name: Run pfaedle SNCB
-        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -o sncb_gtfs_pfaedle
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -F --inplace
 
       - name: Zip SNCF pfaedle result
-        run: zip -r sncb_gtfs_pfaedle.zip sncb_gtfs_pfaedle
+        run: zip -r sncb_gtfs_pfaedle.zip sncb_gtfs
 
       - name: Upload SNCB result
         env:
@@ -191,10 +191,10 @@ jobs:
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''     
 
       - name: Run pfaedle renfe operadora
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -o renfe_operadora_pfaedle
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -F --inplace
 
       - name: Zip renfe operadora results
-        run: zip -r renfe_operadora_pfaedle.zip renfe_operadora_pfaedle
+        run: zip -r renfe_operadora_pfaedle.zip renfe_operadora
 
       - name: Upload Renfe Operadora
         env:
@@ -221,20 +221,17 @@ jobs:
 
       - name: Run Metrolink pfaedle
         run: |
-          ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs
+          ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
 
       - name: Zip metrolink file
-        run: zip -r metrolink-pfaedle.zip gtfs-out
-
-      - name: Remove old folder
-        run: rm -rf gtfs-out
-
+        run: zip -r metrolink-pfaedle.zip metrolink-gtfs
+        
       - name: Run Ile de france pfaedle
         run: |
-          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs
+          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs -F --inplace
 
       - name: Zip the resulting GTFS Ile de France
-        run: zip -r IDFM-gtfs-pfaedle.zip gtfs-out
+        run: zip -r IDFM-gtfs-pfaedle.zip IDFM-gtfs
 
       - name: Upload Metrolink Asset
         env:
