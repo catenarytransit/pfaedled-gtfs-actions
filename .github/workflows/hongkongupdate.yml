@@ -1,0 +1,67 @@
+name: Update Pfaedle file Hong Kong
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: Build Pfaedle
+        run: |
+          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+          cd pfaedle
+          mkdir build && cd build
+          cmake ..
+          make -j
+          sudo make install
+          cd ..
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert guangdong-latest.osm.pbf -o=guangdong-latest.osm
+
+      - name: Download Hong Kong GTFS
+        run: wget https://static.data.gov.hk/td/pt-headway-tc/gtfs.zip -O hk_gtfs.zip
+
+      - name: Unzip of HK gtfs
+        run: |
+          mkdir hk_gtfs
+          unzip hk_gtfs.zip -d hk_gtfs
+
+      - name: Run Hong Kong pfaedle
+        run: |
+          ./pfaedle/build/pfaedle -x guangdong-latest.osm hk_gtfs
+
+      - name: Zip the resulting GTFS Hong Kong
+        run: zip -r hk-gtfs-pfaedle.zip gtfs-out
+
+      - name: Upload Asset Hong Kong
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: hk-gtfs-pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: hk-gtfs-pfaedle.zip      # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
