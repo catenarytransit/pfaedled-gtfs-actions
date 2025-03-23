@@ -56,7 +56,6 @@ jobs:
         run: |
           osmconvert railonly-socal-latest.osm.pbf -o=railonly-socal-latest.osm
           osmconvert ile-de-france-latest.osm.pbf -o=ile-de-france-latest.osm
-          osmconvert guangdong-latest.osm.pbf -o=guangdong-latest.osm
           osmconvert railonly-portugal-latest.osm.pbf -o=railonly-portugal-latest.osm
           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 
