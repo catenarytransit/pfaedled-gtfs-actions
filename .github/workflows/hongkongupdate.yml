@@ -5,7 +5,7 @@ on:
 
 jobs:
   upload-release-asset:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: write
       packages: write
@@ -15,20 +15,24 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download unzip and zip
-        run: sudo apt install unzip zip
+        run: sudo apt install unzip zip -y
 
       - name: Install OSM tools
-        run: sudo apt install osmium-tool osmctools
+        run: sudo apt install osmium-tool osmctools -y
 
       - name: Build Pfaedle
         run: |
-          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
-          cd pfaedle
-          mkdir build && cd build
-          cmake ..
-          make -j
-          sudo make install
-          cd ..
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
 
       - name: Download osm files
         run: |
