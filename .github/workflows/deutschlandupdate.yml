@@ -46,7 +46,9 @@ jobs:
           osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=germany-latest.osm
 
       - name: Download Deutschland GTFS
-        run: wget https://github.com/catenarytransit/gtfs-delfi-copy/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs.zip -O de_gtfs.zip
+        uses: wei/wget@v1
+        with:
+          args: https://github.com/catenarytransit/gtfs-delfi-copy/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs.zip -O de_gtfs.zip
 
       - name: Unzip Deutschland GTFS
         run: unzip de_gtfs.zip -d de_gtfs
