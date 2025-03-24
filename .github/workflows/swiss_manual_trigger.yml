@@ -1,4 +1,4 @@
-name: Manual Update Trigger
+name: Swiss Manual Update Trigger
 
 on:
   workflow_dispatch:
