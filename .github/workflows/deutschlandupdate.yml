@@ -33,12 +33,12 @@ jobs:
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://download.geofabrik.de/europe/germany-latest.osm.pbf
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf
           
       - name: Convert OSM files
         run: |
           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert germany-latest.osm.pbf -o=germany-latest.osm
+          osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=germany-latest.osm
 
       - name: Download Deutschland GTFS
         run: wget https://github.com/catenarytransit/gtfs-delfi-copy/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs.zip -O de_gtfs.zip
