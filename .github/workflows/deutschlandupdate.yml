@@ -1,0 +1,69 @@
+name: Update Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: Build Pfaedle
+        run: |
+          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+          cd pfaedle
+          mkdir build && cd build
+          cmake ..
+          make -j
+          sudo make install
+          cd ..
+
+      - name: Download osm files
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+          wget https://download.geofabrik.de/europe/germany-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+          osmconvert germany-latest.osm.pbf -o=germany-latest.osm
+
+      - name: Download Deutschland GTFS
+        run: wget https://github.com/catenarytransit/gtfs-delfi-copy/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs.zip -O de_gtfs.zip
+
+      - name: Unzip Deutschland GTFS
+        run: unzip de_gtfs.zip -d de_gtfs
+        
+      - name: Run Pfaedle Deutschland Bus network
+        run: ./pfaedle/build/pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry
+
+      - name: Run Pfaedle Deutschland Rail network
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar
+
+      - name: Zip Deutschland gtfs
+        run:  zip -r de_gtfs_pfaedle.zip de_gtfs
+
+      - name: Upload Asset Deutschland GTFS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: de_gtfs_pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: de_gtfs_pfaedle.zip     # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
