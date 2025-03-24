@@ -16,4 +16,4 @@ pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,sub
 
 zip -r de_gtfs_pfaedle.zip de_gtfs
 
-gh release upload latest de_gtfs_pfaedle.zip --clobber
+gh release upload latest de_gtfs_pfaedle.zip --clobber -R https://github.com/catenarytransit/pfaedled-gtfs-actions/
