@@ -22,13 +22,17 @@ jobs:
 
       - name: Build Pfaedle
         run: |
-          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
-          cd pfaedle
-          mkdir build && cd build
-          cmake ..
-          make -j
-          sudo make install
-          cd ..
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
 
       - name: Download osm files
         run: |
