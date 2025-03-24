@@ -55,7 +55,7 @@ jobs:
         run: sed -i 's/\"\",\"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\",\"Europe\/Berlin\"/g' de_gtfs/agency.txt
         
       - name: Run Pfaedle Deutschland Bus network
-        run: ./pfaedle/build/pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+        run: ./pfaedle/build/pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors --drop-shapes
 
       - name: Run Pfaedle Deutschland Rail network
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
