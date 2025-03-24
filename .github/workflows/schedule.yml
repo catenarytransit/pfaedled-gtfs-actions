@@ -11,3 +11,5 @@ permissions:
 jobs:
   call-update:
     uses: ./.github/workflows/update.yml
+  swiss-call-update:
+    uses: ./.github/workflows/swissupdate.yml
