@@ -28,14 +28,12 @@ nwr/highway=tertiary
 nwr/highway=residential
 nwr/highway=living_street
 nwr/highway=unclassified
-
 nwr/highway=motorway_link
 nwr/highway=trunk_link
 nwr/highway=primary_link
 nwr/highway=secondary_link
 nwr/highway=tertiary_link
 nwr/highway=residential_link
-
 nwr/way=primary
 nwr/way=seconday
 nwr/way=bus_guideway
