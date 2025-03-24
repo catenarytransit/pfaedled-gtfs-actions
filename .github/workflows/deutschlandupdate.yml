@@ -60,6 +60,9 @@ jobs:
       - name: Zip Deutschland gtfs
         run:  zip -r de_gtfs_pfaedle.zip de_gtfs
 
+      - name: Correct GTFS agency txt
+        run: sed -i 's/\"\", \"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\", \"Europe\/Berlin\"/g' de_gtfs/agency.txt
+
       - name: Upload Asset Deutschland GTFS
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
