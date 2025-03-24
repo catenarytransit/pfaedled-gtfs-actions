@@ -48,7 +48,7 @@ jobs:
 
       - name: Run Hong Kong pfaedle
         run: |
-          ./pfaedle/build/pfaedle -x guangdong-latest.osm hk_gtfs
+          ./pfaedle/build/pfaedle -x guangdong-latest.osm hk_gtfs --write-colors
 
       - name: Zip the resulting GTFS Hong Kong
         run: zip -r hk-gtfs-pfaedle.zip gtfs-out
