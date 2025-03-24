@@ -50,6 +50,9 @@ jobs:
 
       - name: Unzip Deutschland GTFS
         run: unzip de_gtfs.zip -d de_gtfs
+      
+      - name: Correct GTFS agency txt
+        run: sed -i 's/\"\", \"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\", \"Europe\/Berlin\"/g' de_gtfs/agency.txt
         
       - name: Run Pfaedle Deutschland Bus network
         run: ./pfaedle/build/pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
@@ -59,9 +62,6 @@ jobs:
 
       - name: Zip Deutschland gtfs
         run:  zip -r de_gtfs_pfaedle.zip de_gtfs
-
-      - name: Correct GTFS agency txt
-        run: sed -i 's/\"\", \"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\", \"Europe\/Berlin\"/g' de_gtfs/agency.txt
 
       - name: Upload Asset Deutschland GTFS
         env:
