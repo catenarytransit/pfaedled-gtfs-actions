@@ -1,7 +1,7 @@
-sudo apt install osmium-tool osmctools unzip zip -y
+#sudo apt install osmium-tool osmctools unzip zip -y
 wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
 
-https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf
+wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf
 
 osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=germany-latest.osm
