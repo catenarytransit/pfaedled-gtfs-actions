@@ -80,7 +80,7 @@ jobs:
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm export_gtfs_voyages  -F --inplace
 
       - name: Run pfaedle SNCF intercites
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_intercites  -F --inplace
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_intercites  -F --inplace --write-colors
 
       - name: Run pfaedle SNCF TER
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_ter -F --inplace
@@ -134,7 +134,7 @@ jobs:
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
       - name: Download SNCB GTFS
-        run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip
+        run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip 
 
       - name: Download metrolink gtfs
         run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
@@ -152,10 +152,10 @@ jobs:
         run: unzip sncb_gtfs.zip -d sncb_gtfs
 
       - name: Unzip renfe operadora
-        run: unzip renfe_operadora.zip -d renfe_operadora
+        run: unzip renfe_operadora.zip -d renfe_operadora 
 
       - name: Run pfaedle Portugal
-        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -F --inplace
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -F --inplace --write-colors
 
       - name: Zip PC results
         run: zip -9 -r pc_gtfs_pfaedle.zip pc_gtfs/*
@@ -174,7 +174,7 @@ jobs:
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
       
       - name: Run pfaedle SNCB
-        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -F --inplace
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -F --inplace  --write-colors
 
       - name: Zip SNCF pfaedle result
         run: zip -9 -r sncb_gtfs_pfaedle.zip sncb_gtfs/*
@@ -193,7 +193,7 @@ jobs:
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''     
 
       - name: Run pfaedle renfe operadora
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -F --inplace
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -F --inplace --write-colors
 
       - name: Zip renfe operadora results
         run: zip -9 -r renfe_operadora_pfaedle.zip renfe_operadora/*
