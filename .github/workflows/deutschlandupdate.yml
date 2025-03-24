@@ -30,10 +30,15 @@ jobs:
           sudo make install
           cd ..
 
-      - name: Download osm files
-        run: |
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf
+      - name: download OSM railonly
+        uses: wei/wget@v1
+        with:
+          args: https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+
+      - name: download OSM deutschland
+        uses: wei/wget@v1
+        with:
+          args: https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf
           
       - name: Convert OSM files
         run: |
