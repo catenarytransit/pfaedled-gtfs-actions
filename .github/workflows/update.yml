@@ -43,7 +43,6 @@ jobs:
           wget https://download.geofabrik.de/north-america/us/california/socal-latest.osm.pbf
           wget https://download.geofabrik.de/europe/portugal-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://download.geofabrik.de/europe/switzerland-latest.osm.pbf
 
       - name: Filter Portugal
         run: |
@@ -59,7 +58,6 @@ jobs:
           osmconvert ile-de-france-latest.osm.pbf -o=ile-de-france-latest.osm
           osmconvert railonly-portugal-latest.osm.pbf -o=railonly-portugal-latest.osm
           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert switzerland-latest.osm.pbf -o=switzerland-latest.osm
 
       - name: Download zip of ile de france gtfs
         uses: wei/wget@v1
@@ -260,34 +258,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: IDFM-gtfs-pfaedle.zip # Replace with the actual path to your file
           ASSET_NAME: IDFM-gtfs-pfaedle.zip      # Replace with the desired name of the asset
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
-
-      - name: Download Swiss GTFS
-        run: wget https://data.opentransportdata.swiss/en/dataset/timetable-2025-gtfs2020/permalink -O swiss_gtfs.zip
-
-      - name: Unzip Swiss GTFS
-        run: unzip swiss_gtfs.zip -d swiss_gtfs
-
-      - name: Run Pfaedle Swiss Bus network
-        run: ./pfaedle/build/pfaedle -x switzerland-latest.osm swiss_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley
-
-      - name: Run Pfaedle Swiss Rail network
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm swiss_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar
-
-      - name: Zip swiss gtfs
-        run:  zip -r swiss_gtfs_pfaedle.zip swiss_gtfs
-
-      - name: Upload Asset Swiss GTFS
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: swiss_gtfs_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: swiss_gtfs_pfaedle.zip     # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
           echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
