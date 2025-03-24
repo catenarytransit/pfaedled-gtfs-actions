@@ -5,7 +5,7 @@ wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfae
 
 osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=germany-latest.osm
-
+wget https://github.com/catenarytransit/gtfs-delfi-copy/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs.zip -O de_gtfs.zip
 unzip de_gtfs.zip -d de_gtfs
       
 sed -i 's/\"\",\"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\",\"Europe\/Berlin\"/g' de_gtfs/agency.txt
