@@ -47,10 +47,10 @@ jobs:
         run: unzip de_gtfs.zip -d de_gtfs
         
       - name: Run Pfaedle Deutschland Bus network
-        run: ./pfaedle/build/pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry
+        run: ./pfaedle/build/pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
 
       - name: Run Pfaedle Deutschland Rail network
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
 
       - name: Zip Deutschland gtfs
         run:  zip -r de_gtfs_pfaedle.zip de_gtfs
