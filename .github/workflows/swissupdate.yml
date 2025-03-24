@@ -47,7 +47,7 @@ jobs:
         run: unzip swiss_gtfs.zip -d swiss_gtfs
 
       - name: Run Pfaedle Swiss Bus network
-        run: ./pfaedle/build/pfaedle -x switzerland-latest.osm swiss_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley
+        run: ./pfaedle/build/pfaedle -x switzerland-latest.osm swiss_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry
 
       - name: Run Pfaedle Swiss Rail network
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm swiss_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar
