@@ -239,11 +239,8 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
-      - name: Extract Eurostar
-        run: unzip  eurostar.zip -d  eurostar
-
       - name: Pfaedle Eurostar
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm  eurostar -F --inplace
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm  eurostar -F --inplace --write-colors
 
       - name: Zip Eurostar
         run: zip -9 -r eurostar-pfaedle.zip eurostar/*
