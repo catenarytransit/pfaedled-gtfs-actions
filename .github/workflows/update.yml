@@ -148,7 +148,7 @@ jobs:
         run: unzip sncb_gtfs.zip -d sncb_gtfs
 
       - name: Unzip Eurostar GTFS
-        run: unzip sncb_gtfs.zip -d sncb_gtfs
+        run: unzip eurostar.zip -d eurostar
 
       - name: Unzip renfe operadora
         run: unzip renfe_operadora.zip -d renfe_operadora 
