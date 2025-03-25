@@ -15,14 +15,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download Se GTFS
-        run: wget https://opendata.samtrafiken.se/gtfs-sweden/sweden_extra.zip?key=52ee277737404739b8996e022eb09c2c -O sweden_extra.zip
+        run: wget https://opendata.samtrafiken.se/gtfs-sweden/sweden.zip?key=52ee277737404739b8996e022eb09c2c -O sweden.zip
 
       - name: Upload Asset Se GTFS
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: sweden_extra.zip # Replace with the actual path to your file
-          ASSET_NAME: sweden_extra.zip     # Replace with the desired name of the asset
+          ASSET_PATH: sweden.zip # Replace with the actual path to your file
+          ASSET_NAME: sweden.zip     # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
           echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
