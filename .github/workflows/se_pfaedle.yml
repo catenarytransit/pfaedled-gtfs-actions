@@ -45,10 +45,10 @@ jobs:
           osmconvert pfaedle-filtered-sweden-latest.osm.pbf -o=sweden-latest.osm
 
       - name: Download Se GTFS
-        run: wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/sweden_extra.zip
+        run: wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/sweden.zip
 
       - name: Unzip Se GTFS
-        run: unzip sweden_extra.zip -d sweden
+        run: unzip sweden.zip -d sweden
 
       - name: Run Pfaedle Se Bus network
         run: pfaedle -x sweden-latest.osm sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors
