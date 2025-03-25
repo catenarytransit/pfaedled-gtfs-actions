@@ -173,7 +173,7 @@ jobs:
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
       
       - name: Run pfaedle SNCB
-        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -F --inplace  --write-colors
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm sncb_gtfs -F --inplace  --write-colors --drop-shapes
 
       - name: Zip SNCF pfaedle result
         run: zip -9 -r sncb_gtfs_pfaedle.zip sncb_gtfs/*
