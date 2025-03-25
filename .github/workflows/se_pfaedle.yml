@@ -51,10 +51,10 @@ jobs:
         run: unzip sweden_extra.zip -d sweden
 
       - name: Run Pfaedle Se Bus network
-        run: pfaedle -x sweden-latest.osm sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+        run: pfaedle -x sweden-latest.osm sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors
 
       - name: Run Pfaedle Se Rail network
-        run: pfaedle -x railonly-europe-latest.osm sweden -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+        run: pfaedle -x railonly-europe-latest.osm sweden -F --inplace --mots rail --write-colors
 
       - name: Zip se gtfs
         run:  zip -r -9 sweden_pfaedle.zip sweden/*
