@@ -1,0 +1,69 @@
+name: Update Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/north-america/us/california/socal-latest.osm.pbf
+          
+      - name: Filter Socal rail entwork
+        run: |
+          osmium tags-filter -o railonly-socal-latest.osm.pbf --expressions=railway-filter.txt socal-latest.osm.pbf
+
+      - name: Download Swiss GTFS
+        run: wget https://data.opentransportdata.swiss/en/dataset/timetable-2025-gtfs2020/permalink -O swiss_gtfs.zip
+
+      - name: Download metrolink gtfs
+        run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
+
+      - name: Run Metrolink pfaedle
+        run: |
+          ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
+
+      - name: Zip swiss gtfs
+        run: zip -9 -r metrolink-pfaedle.zip metrolink-gtfs/*
+
+      - name: Upload Metrolink Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: metrolink-pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: metrolink-pfaedle.zip     # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
