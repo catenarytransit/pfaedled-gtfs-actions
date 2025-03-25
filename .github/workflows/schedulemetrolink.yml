@@ -1,0 +1,13 @@
+name: Update Scheduled Metrolink
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  call-update:
+    uses: ./.github/workflows/metrolinkupdate.yml
