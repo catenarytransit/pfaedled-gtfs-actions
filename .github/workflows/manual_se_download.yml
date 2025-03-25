@@ -1,4 +1,4 @@
-name: Manual Update Trigger
+name: Manual Trigger - SE Download
 
 on:
   workflow_dispatch:
