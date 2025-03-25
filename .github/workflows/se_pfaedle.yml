@@ -1,0 +1,73 @@
+name: Update Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip -y
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools -y
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+          wget https://download.geofabrik.de/europe/sweden-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+          osmconvert sweden-latest.osm.pbf -o=sweden-latest.osm
+
+      - name: Download Se GTFS
+        run: wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/sweden_extra.zip
+
+      - name: Unzip Se GTFS
+        run: unzip sweden_extra.zip -d sweden
+
+      - name: Run Pfaedle Se Bus network
+        run: pfaedle -x sweden-latest.osm sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+
+      - name: Run Pfaedle Se Rail network
+        run: pfaedle -x railonly-europe-latest.osm sweden -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+
+      - name: Zip se gtfs
+        run:  zip -r -9 sweden_pfaedle.zip sweden/*
+
+      - name: Upload Asset Se GTFS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: sweden_pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: sweden_pfaedle.zip # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
