@@ -37,12 +37,12 @@ jobs:
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://download.geofabrik.de/europe/sweden-latest.osm.pbf
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-sweden-latest.osm.pbf
           
       - name: Convert OSM files
         run: |
           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert sweden-latest.osm.pbf -o=sweden-latest.osm
+          osmconvert pfaedle-filtered-sweden-latest.osm.pbf -o=sweden-latest.osm
 
       - name: Download Se GTFS
         run: wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/sweden_extra.zip
