@@ -28,7 +28,7 @@ jobs:
       - name: Install GTFS tidy
         run: |
           go install github.com/patrickbr/gtfstidy@latest
-          gotidy --help
+          gtfstidy --help
 
       - name: Build Pfaedle
         run: |
