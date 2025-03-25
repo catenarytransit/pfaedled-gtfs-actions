@@ -1,0 +1,13 @@
+name: Update Scheduled SE
+
+on:
+  schedule:
+    - cron: '0 11 * * *'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  call-update:
+    uses: ./.github/workflows/se_pfaedle.yml
