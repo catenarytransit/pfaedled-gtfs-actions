@@ -5,7 +5,7 @@ on:
 
 jobs:
   upload-release-asset:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
@@ -19,6 +19,9 @@ jobs:
 
       - name: Install OSM tools
         run: sudo apt install osmium-tool osmctools -y
+
+      - name: Install GTFS tidy
+        run: go install github.com/patrickbr/gtfstidy@latest
 
       - name: Build Pfaedle
         run: |
@@ -49,6 +52,14 @@ jobs:
 
       - name: Unzip Se GTFS
         run: unzip sweden.zip -d sweden
+
+      - name: Fix GTFS
+        run: gtfstidy -D --drop-shapes -o sweden_cleaned sweden
+
+      - name: RM old file
+        run: |
+          rm -rf sweden
+          mv sweden_cleaned sweden
 
       - name: Run Pfaedle Se Bus network
         run: pfaedle -x sweden-latest.osm sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors --drop-shapes true
