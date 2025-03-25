@@ -40,17 +40,12 @@ jobs:
       - name: Download osm files
         run: |
           wget https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
-          wget https://download.geofabrik.de/north-america/us/california/socal-latest.osm.pbf
           wget https://download.geofabrik.de/europe/portugal-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
 
       - name: Filter Portugal
         run: |
           osmium tags-filter -o railonly-portugal-latest.osm.pbf --expressions=railway-filter.txt portugal-latest.osm.pbf
-          
-      - name: Filter Socal rail entwork
-        run: |
-          osmium tags-filter -o railonly-socal-latest.osm.pbf --expressions=railway-filter.txt socal-latest.osm.pbf
 
       - name: Convert OSM files
         run: |
@@ -211,22 +206,10 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''        
 
-      - name: Unzip Metrolink GTFS
-        run: |
-          mkdir metrolink-gtfs  
-          unzip metrolink.zip -d metrolink-gtfs  
-
       - name: Unzip of ile de france gtfs
         run: |
           mkdir IDFM-gtfs
           unzip IDFM-gtfs.zip -d IDFM-gtfs
-
-      - name: Run Metrolink pfaedle
-        run: |
-          ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
-
-      - name: Zip metrolink file
-        run: zip -9 -r metrolink-pfaedle.zip metrolink-gtfs/*
         
       - name: Run Ile de france pfaedle Local rail and bus
         run: |
@@ -238,19 +221,6 @@ jobs:
 
       - name: Zip the resulting GTFS Ile de France
         run: zip -9 -r IDFM-gtfs-pfaedle.zip IDFM-gtfs/*
-
-      - name: Upload Metrolink Asset
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: metrolink-pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: metrolink-pfaedle.zip     # Replace with the desired name of the asset
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
       - name: Upload Asset Ile De France
         env:
