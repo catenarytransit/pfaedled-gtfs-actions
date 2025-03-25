@@ -42,9 +42,6 @@ jobs:
         run: |
           osmium tags-filter -o railonly-socal-latest.osm.pbf --expressions=railway-filter.txt socal-latest.osm.pbf
 
-      - name: Download Swiss GTFS
-        run: wget https://data.opentransportdata.swiss/en/dataset/timetable-2025-gtfs2020/permalink -O swiss_gtfs.zip
-
       - name: Download metrolink gtfs
         run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
 
@@ -52,7 +49,7 @@ jobs:
         run: |
           ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
 
-      - name: Zip swiss gtfs
+      - name: Zip metrolink gtfs
         run: zip -9 -r metrolink-pfaedle.zip metrolink-gtfs/*
 
       - name: Upload Metrolink Asset
