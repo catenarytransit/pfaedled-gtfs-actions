@@ -1,0 +1,31 @@
+name: Update Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download Se GTFS
+        run: wget https://opendata.samtrafiken.se/gtfs-sweden/sweden_extra.zip?key=60fb46a4e52d46589f670d18aad202de -O sweden_extra.zip
+
+      - name: Upload Asset Se GTFS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: sweden_extra.zip # Replace with the actual path to your file
+          ASSET_NAME: sweden_extra.zip     # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
