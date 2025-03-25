@@ -47,7 +47,7 @@ jobs:
 
       - name: Run Metrolink pfaedle
         run: |
-          ./pfaedle/build/pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
+          pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
 
       - name: Zip metrolink gtfs
         run: zip -9 -r metrolink-pfaedle.zip metrolink-gtfs/*
