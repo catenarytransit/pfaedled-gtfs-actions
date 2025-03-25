@@ -20,8 +20,15 @@ jobs:
       - name: Install OSM tools
         run: sudo apt install osmium-tool osmctools -y
 
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.13.1'
+
       - name: Install GTFS tidy
-        run: go install github.com/patrickbr/gtfstidy@latest
+        run: |
+          go install github.com/patrickbr/gtfstidy@latest
+          gotidy --help
 
       - name: Build Pfaedle
         run: |
