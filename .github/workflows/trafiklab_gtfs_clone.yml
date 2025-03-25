@@ -1,4 +1,4 @@
-name: Update Pfaedle files
+name: Trafiklab download
 
 on:
   workflow_call:
@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download Se GTFS
-        run: wget https://opendata.samtrafiken.se/gtfs-sweden/sweden_extra.zip?key=60fb46a4e52d46589f670d18aad202de -O sweden_extra.zip
+        run: wget https://opendata.samtrafiken.se/gtfs-sweden/sweden_extra.zip?key=52ee277737404739b8996e022eb09c2c -O sweden_extra.zip
 
       - name: Upload Asset Se GTFS
         env:
