@@ -131,9 +131,6 @@ jobs:
       - name: Download SNCB GTFS
         run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip 
 
-      - name: Download metrolink gtfs
-        run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
-
       - name: Download PC GTFS
         run: wget https://publico.cp.pt/gtfs/gtfs.zip -O pc_gtfs.zip
 
