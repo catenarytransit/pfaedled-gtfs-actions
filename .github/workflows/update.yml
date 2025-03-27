@@ -248,7 +248,7 @@ jobs:
       - name: Pfaedle trenord
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm trenord -F --inplace --mots rail
 
-      - name: Zip Trenitalia
+      - name: Zip trenord
         run: zip -9 -r trenord-pfaedle.zip trenord/*
 
       - name: Upload Asset trenord
