@@ -239,21 +239,27 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
 
-      - name: Pfaedle Eurostar
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm  eurostar -F --inplace --write-colors
+      - name: wget Trenord
+        run: wget https://www.dati.lombardia.it/download/3z4k-mxz9/application%2Fzip -O trenord.zip
 
-      - name: Zip Eurostar
-        run: zip -9 -r eurostar-pfaedle.zip eurostar/*
+      - name: Unzip Trenord
+        run: unzip trenord.zip -d trenord
 
-      - name: Upload Asset Eurostar
+      - name: Pfaedle trenord
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm trenord -F --inplace --mots rail
+
+      - name: Zip Trenitalia
+        run: zip -9 -r trenord-pfaedle.zip trenord/*
+
+      - name: Upload Asset trenord
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: eurostar-pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: eurostar-pfaedle.zip      # Replace with the desired name of the asset
+          ASSET_PATH: trenord-pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: trenord-pfaedle.zip      # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
           echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''      
