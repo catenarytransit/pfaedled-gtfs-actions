@@ -1,0 +1,12 @@
+name: Manual De Download
+
+on:
+  workflow_dispatch:
+    
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  call-update:
+    uses: ./.github/workflows/download_delfi_raw.yml
