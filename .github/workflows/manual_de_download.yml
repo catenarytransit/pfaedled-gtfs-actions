@@ -9,4 +9,4 @@ permissions:
 
 jobs:
   call-update:
-    uses: ./.github/workflows/download_delfi_raw.yml
+    uses: ./.github/workflows/download_delfi_raw.yaml
