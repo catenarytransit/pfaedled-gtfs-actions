@@ -13,5 +13,7 @@ jobs:
     uses: ./.github/workflows/update.yml
   swiss-call-update:
     uses: ./.github/workflows/swissupdate.yml
+  download-raw-de:
+    use: ./github/workflows/download_delfi_raw.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
