@@ -19,9 +19,26 @@ pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolle
 pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
 
 ./shape-squash/target/release/shape-squash de_gtfs/shapes.txt
-gtfstidy -s de_gtfs/
+gtfstidy --fix -s de_gtfs/
 
 rm de_gtfs_pfaedle.zip
 zip de_gtfs_pfaedle.zip gtfs-out/*
 
 gh release upload latest de_gtfs_pfaedle.zip --clobber -R https://github.com/catenarytransit/pfaedled-gtfs-actions/
+
+echo "doing nvbw.de"
+
+wget https://www.nvbw.de/fileadmin/user_upload/service/open_data/fahrplandaten_ohne_liniennetz/bwsbahnubahn.zip -O bwsbahnubahn.zip
+
+echo "unzip nvbw"
+rm -r nvbw
+unzip bwsbahnubahn.zip -d nvbw
+
+pfaedle -x germany-latest.osm nvbw -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors --drop-shapes true
+pfaedle -x railonly-europe-latest.osm nvbw -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
+
+echo "zipping nvbw result"
+
+zip nvbw_pfaedle.zip nvbw/*
+
+gh release upload latest nvbw_pfaedle.zip --clobber -R https://github.com/catenarytransit/pfaedled-gtfs-actions/
