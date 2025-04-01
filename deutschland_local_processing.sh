@@ -4,7 +4,7 @@ wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfae
 
 osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=germany-latest.osm
-wget https://github.com/catenarytransit/gtfs-delfi-copy/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs.zip -O de_gtfs.zip
+wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs_raw.zip -O de_gtfs.zip
 
 rm -rf de_gtfs
 
