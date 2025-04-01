@@ -1,4 +1,4 @@
-name: Update Pfaedle files
+name: Download Delfi RaW
 
 on:
   workflow_call:
