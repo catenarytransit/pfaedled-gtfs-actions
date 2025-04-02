@@ -40,8 +40,11 @@ echo "unzip nvbw"
 rm -r nvbw
 unzip bwsbahnubahn.zip -d nvbw
 
-pfaedle -x germany-latest.osm nvbw -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors --drop-shapes true
-pfaedle -x railonly-europe-latest.osm nvbw -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
+gtfstidy --fix -s -o nvbw_tidy/ de_gtfs/
+mv nvbw_tidy/* nvbw/
+
+pfaedle -x germany-latest.osm nvbw -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+pfaedle -x railonly-europe-latest.osm nvbw -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
 #gtfstidy --fix -s nvbw/
 echo "zipping nvbw result"
 
