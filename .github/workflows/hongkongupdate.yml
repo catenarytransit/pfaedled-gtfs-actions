@@ -20,6 +20,9 @@ jobs:
       - name: Install OSM tools
         run: sudo apt install osmium-tool osmctools -y
 
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
+
       - name: Build Pfaedle
         run: |
           if ! command -v pfaedle &> /dev/null; then
