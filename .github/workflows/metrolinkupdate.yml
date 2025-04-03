@@ -45,6 +45,9 @@ jobs:
       - name: Download metrolink gtfs
         run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
 
+      - name: Unzip metrolink
+        run: unzip metrolink.zip -d metrolink-gtfs
+
       - name: Run Metrolink pfaedle
         run: |
           pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
