@@ -16,7 +16,7 @@ sed -i 's/\"\",\"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\",\"Europe\/Berli
 
 rm -rf de_gtfs_tidy/
 
-gtfstidy --fix -s -o de_gtfs_tidy/ de_gtfs/
+gtfstidy --fix --drop-shapes -o de_gtfs_tidy/ de_gtfs/
 
 mv de_gtfs_tidy/* de_gtfs/
 
@@ -25,7 +25,7 @@ pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolle
 pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
 
 ./shape-squash/target/release/shape-squash de_gtfs/shapes.txt
-gtfstidy --fix -s  -o de_gtfs_tidy/ de_gtfs/
+gtfstidy --fix -s -S -o de_gtfs_tidy/ de_gtfs/
 
 rm de_gtfs_pfaedle.zip
 zip de_gtfs_pfaedle.zip de_gtfs_tidy/*
