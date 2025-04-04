@@ -101,39 +101,36 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: export_gtfs_voyages_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: export_gtfs_voyages_pfaedle.zip # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+        if: env.ASSET_PATH != ''
 
       - name: Upload SNCF TER results
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: sncf_ter_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: sncf_ter_pfaedle.zip # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+        if: env.ASSET_PATH != ''
 
       - name: Upload SNCF intercites results
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: sncf_intercites_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: sncf_intercites_pfaedle.zip # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+        if: env.ASSET_PATH != ''
 
       - name: Download SNCB GTFS
         run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip 
@@ -167,13 +164,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: pc_gtfs_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: pc_gtfs_pfaedle.zip      # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+        if: env.ASSET_PATH != ''
       
       - name: Run pfaedle SNCB
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncb_gtfs -F --inplace  --write-colors --drop-shapes true
@@ -186,13 +182,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: sncb_gtfs_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: sncb_gtfs_pfaedle.zip # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''     
+        if: env.ASSET_PATH != '' 
 
       - name: Run pfaedle renfe operadora
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -F --inplace --write-colors
@@ -205,13 +200,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: renfe_operadora_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: renfe_operadora_pfaedle.zip # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''        
+        if: env.ASSET_PATH != ''     
 
       - name: Unzip of ile de france gtfs
         run: |
@@ -234,16 +228,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: IDFM-gtfs-pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: IDFM-gtfs-pfaedle.zip      # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+        if: env.ASSET_PATH != ''
 
       - name: wget Trenord
-        run: wget https://www.dati.lombardia.it/download/3z4k-mxz9/application%2Fzip -O trenord.zip
+        uses: wei/wget@v1
+        with:
+          args: https://www.dati.lombardia.it/download/3z4k-mxz9/application%2Fzip -O trenord.zip
 
       - name: Unzip Trenord
         run: unzip trenord.zip -d trenord
@@ -259,10 +254,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: trenord-pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: trenord-pfaedle.zip      # Replace with the desired name of the asset
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          echo "Uploading asset: $ASSET_PATH to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''      
+        if: env.ASSET_PATH != ''
+
+      - name: Download Zssk GTFS
+        uses: wei/wget@v1
+        with:
+          args: https://www.zsr.sk/files/pre-cestujucich/cestovny-poriadok/gtfs/gtfs.zip -O zssk_gtfs.zip
+
+      - name: Unzip ZSSK
+        run: unzip zssk_gtfs.zip -d zssk_gtfs
+
+      - name: Pfaedle ZSSK
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm zssk_gtfs -F --inplace --mots rail
+
+      - name: Zip ZSSK
+        run: zip -9 -r zssk_gtfs-pfaedle.zip zssk_gtfs/*
+
+      - name: Upload Asset ZSSK
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: zssk_gtfs-pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
