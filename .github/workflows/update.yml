@@ -270,7 +270,7 @@ jobs:
         run: unzip zssk_gtfs.zip -d zssk_gtfs
 
       - name: Pfaedle ZSSK
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm zssk_gtfs -F --inplace --mots rail
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm zssk_gtfs -F --inplace --mots rail --drop-shapes true
 
       - name: Zip ZSSK
         run: zip -9 -r zssk_gtfs-pfaedle.zip zssk_gtfs/*
