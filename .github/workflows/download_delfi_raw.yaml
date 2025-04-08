@@ -17,15 +17,46 @@ jobs:
       - name: Download Fareplan
         run: wget https://www.opendata-oepnv.de/ht/de/datensaetze/sharing?tx_vrrkit_view%5Bsharing%5D=eyJkYXRhc2V0IjoiZGV1dHNjaGxhbmR3ZWl0ZS1zb2xsZmFocnBsYW5kYXRlbi1ndGZzIn0 -O fahrplaene_gesamtdeutschland_gtfs_raw.zip
 
+      - name: Calculate MD5 Hash
+        id: calculate_md5
+        run: |
+          md5sum fahrplaene_gesamtdeutschland_gtfs_raw.zip | awk '{print $1}' > fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5
+          echo "MD5=$(cat fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5)" >> $GITHUB_OUTPUT
+
+      - name: Check for Existing Assets
+        id: check_assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_RELEASE=$(gh release view latest --json assets --jq '.assets[].name' --repo "${{ github.repository }}" | tr -d '"' | jq -R -s -c 'split("\n")[:-1]')
+          ZIP_EXISTS=$(echo "$LATEST_RELEASE" | jq -e --arg zip_name "fahrplaene_gesamtdeutschland_gtfs_raw.zip" 'any(.[]; . == $zip_name)')
+          MD5_EXISTS=$(echo "$LATEST_RELEASE" | jq -e --arg md5_name "fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5" 'any(.[]; . == $md5_name)')
+          echo "ZIP_EXISTS=$ZIP_EXISTS" >> $GITHUB_OUTPUT
+          echo "MD5_EXISTS=$MD5_EXISTS" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Upload Asset DE GTFS
+        if: steps.check_assets.outputs.ZIP_EXISTS == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: fahrplaene_gesamtdeutschland_gtfs_raw.zip # Replace with the actual path to your file
-          ASSET_NAME: fahrplaene_gesamtdeutschland_gtfs_raw.zip # Replace with the desired name of the asset
+          ASSET_PATH: fahrplaene_gesamtdeutschland_gtfs_raw.zip
+          ASSET_NAME: fahrplaene_gesamtdeutschland_gtfs_raw.zip
           RELEASE_TAG: latest
         run: |
           echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+
+      - name: Upload MD5 Hash
+        if: steps.check_assets.outputs.MD5_EXISTS == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5
+          ASSET_NAME: fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading MD5 hash: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
