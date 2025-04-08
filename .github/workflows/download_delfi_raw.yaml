@@ -1,62 +1,73 @@
-name: Download Delfi RaW
+name: Download Delfi Raw
 
-on:
-  workflow_call:
+ on:
+   workflow_call:
 
-jobs:
-  upload-release-asset:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
+ jobs:
+   upload-release-asset:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: write
+       packages: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
 
-      - name: Download Fareplan
-        run: wget https://www.opendata-oepnv.de/ht/de/datensaetze/sharing?tx_vrrkit_view%5Bsharing%5D=eyJkYXRhc2V0IjoiZGV1dHNjaGxhbmR3ZWl0ZS1zb2xsZmFocnBsYW5kYXRlbi1ndGZzIn0 -O fahrplaene_gesamtdeutschland_gtfs_raw.zip
+       - name: Download Fareplan
+         id: download_fareplan
+         run: |
+           wget https://www.opendata-oepnv.de/ht/de/datensaetze/sharing?tx_vrrkit_view%5Bsharing%5D=eyJkYXRhc2V0IjoiZGV1dHNjaGxhbmR3ZWl0ZS1zb2xsZmFocnBsYW5kYXRlbi1ndGZzIn0 -O fahrplaene_gesamtdeutschland_gtfs_raw.zip
+           echo "FILE_PATH=fahrplaene_gesamtdeutschland_gtfs_raw.zip" >> $GITHUB_OUTPUT
 
-      - name: Calculate MD5 Hash
-        id: calculate_md5
-        run: |
-          md5sum fahrplaene_gesamtdeutschland_gtfs_raw.zip | awk '{print $1}' > fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5
-          echo "MD5=$(cat fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5)" >> $GITHUB_OUTPUT
+       - name: Calculate MD5 Hash
+         id: calculate_md5
+         run: |
+           filepath="${{ steps.download_fareplan.outputs.FILE_PATH }}"
+           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+           echo "MD5_HASH=$md5_hash" >> $GITHUB_OUTPUT
+           echo "MD5_FILE_PATH=$filepath.md5" >> $GITHUB_OUTPUT
+           echo "$md5_hash" > "$filepath.md5"
 
-      - name: Check for Existing Assets
-        id: check_assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          LATEST_RELEASE=$(gh release view latest --json assets --jq '.assets[].name' --repo "${{ github.repository }}" | tr -d '"' | jq -R -s -c 'split("\n")[:-1]')
-          ZIP_EXISTS=$(echo "$LATEST_RELEASE" | jq -e --arg zip_name "fahrplaene_gesamtdeutschland_gtfs_raw.zip" 'any(.[]; . == $zip_name)')
-          MD5_EXISTS=$(echo "$LATEST_RELEASE" | jq -e --arg md5_name "fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5" 'any(.[]; . == $md5_name)')
-          echo "ZIP_EXISTS=$ZIP_EXISTS" >> $GITHUB_OUTPUT
-          echo "MD5_EXISTS=$MD5_EXISTS" >> $GITHUB_OUTPUT
-        shell: bash
+       - name: Download Existing MD5 Hash
+         id: download_existing_md5
+         run: |
+           ASSET_NAME="${{ steps.download_fareplan.outputs.FILE_PATH }}"
+           MD5_ASSET_NAME="${ASSET_NAME}.md5"
+           RELEASE_TAG="latest"
+           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+           if wget --spider --quiet "$RELEASE_URL"; then
+             echo "MD5_EXISTS=true" >> $GITHUB_OUTPUT
+             wget --quiet -O existing_md5.txt "$RELEASE_URL"
+             EXISTING_MD5=$(cat existing_md5.txt)
+             echo "EXISTING_MD5=$EXISTING_MD5" >> $GITHUB_OUTPUT
+           else
+             echo "MD5_EXISTS=false" >> $GITHUB_OUTPUT
+           fi
 
-      - name: Upload Asset DE GTFS
-        if: steps.check_assets.outputs.ZIP_EXISTS == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: fahrplaene_gesamtdeutschland_gtfs_raw.zip
-          ASSET_NAME: fahrplaene_gesamtdeutschland_gtfs_raw.zip
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
+       - name: Upload Assets
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_TOKEN: ${{ github.token }}
+           ASSET_PATH: ${{ steps.download_fareplan.outputs.FILE_PATH }}
+           MD5_ASSET_PATH: ${{ steps.calculate_md5.outputs.MD5_FILE_PATH }}
+           ASSET_NAME: ${{ steps.download_fareplan.outputs.FILE_PATH }}
+           MD5_ASSET_NAME: ${{ steps.download_fareplan.outputs.FILE_PATH }}.md5
+           RELEASE_TAG: latest
+         run: |
+           NEW_MD5="${{ steps.calculate_md5.outputs.MD5_HASH }}"
+           MD5_EXISTS="${{ steps.download_existing_md5.outputs.MD5_EXISTS }}"
+           EXISTING_MD5="${{ steps.download_existing_md5.outputs.EXISTING_MD5 }}"
 
-      - name: Upload MD5 Hash
-        if: steps.check_assets.outputs.MD5_EXISTS == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5
-          ASSET_NAME: fahrplaene_gesamtdeutschland_gtfs_raw.zip.md5
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading MD5 hash: $ASSET_PATH as $ASSET_NAME to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
+           if [[ "$MD5_EXISTS" == "false" ]]; then
+             echo "No existing MD5 found. Uploading both file and MD5."
+             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --name "$ASSET_NAME" --clobber
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --name "$MD5_ASSET_NAME" --clobber
+           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+             echo "Existing MD5 is different. Uploading both file and new MD5."
+             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --name "$ASSET_NAME" --clobber
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --name "$MD5_ASSET_NAME" --clobber
+           else
+             echo "Existing MD5 matches the new MD5. Skipping upload."
+           fi
+         shell: bash
