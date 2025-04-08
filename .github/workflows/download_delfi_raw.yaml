@@ -1,9 +1,9 @@
 name: Download Delfi Raw
 
- on:
+on:
    workflow_call:
 
- jobs:
+jobs:
    upload-release-asset:
      runs-on: ubuntu-latest
      permissions:
