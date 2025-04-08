@@ -17,7 +17,7 @@ jobs:
        - name: Download Fareplan
          id: download_fareplan
          run: |
-           wget https://www.opendata-oepnv.de/ht/de/datensaetze/sharing?tx_vrrkit_view%5Bsharing%5D=eyJkYXRhc2V0IjoiZGV1dHNjaGxhbmR3ZWl0ZS1zb2xsZmFocnBsYW5kYXRlbi1ndGZzIn0 -O fahrplaene_gesamtdeutschland_gtfs_raw.zip
+           wget --quiet https://www.opendata-oepnv.de/ht/de/datensaetze/sharing?tx_vrrkit_view%5Bsharing%5D=eyJkYXRhc2V0IjoiZGV1dHNjaGxhbmR3ZWl0ZS1zb2xsZmFocnBsYW5kYXRlbi1ndGZzIn0 -O fahrplaene_gesamtdeutschland_gtfs_raw.zip
            echo "FILE_PATH=fahrplaene_gesamtdeutschland_gtfs_raw.zip" >> $GITHUB_OUTPUT
 
        - name: Calculate MD5 Hash
