@@ -1,9 +1,9 @@
 name: Download Delfi Raw
 
-on:
+ on:
    workflow_call:
 
-jobs:
+ jobs:
    upload-release-asset:
      runs-on: ubuntu-latest
      permissions:
@@ -51,8 +51,6 @@ jobs:
            GH_TOKEN: ${{ github.token }}
            ASSET_PATH: ${{ steps.download_fareplan.outputs.FILE_PATH }}
            MD5_ASSET_PATH: ${{ steps.calculate_md5.outputs.MD5_FILE_PATH }}
-           ASSET_NAME: ${{ steps.download_fareplan.outputs.FILE_PATH }}
-           MD5_ASSET_NAME: ${{ steps.download_fareplan.outputs.FILE_PATH }}.md5
            RELEASE_TAG: latest
          run: |
            NEW_MD5="${{ steps.calculate_md5.outputs.MD5_HASH }}"
@@ -61,12 +59,12 @@ jobs:
 
            if [[ "$MD5_EXISTS" == "false" ]]; then
              echo "No existing MD5 found. Uploading both file and MD5."
-             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --name "$ASSET_NAME" --clobber
-             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --name "$MD5_ASSET_NAME" --clobber
+             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
            elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
              echo "Existing MD5 is different. Uploading both file and new MD5."
-             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --name "$ASSET_NAME" --clobber
-             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --name "$MD5_ASSET_NAME" --clobber
+             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
            else
              echo "Existing MD5 matches the new MD5. Skipping upload."
            fi
