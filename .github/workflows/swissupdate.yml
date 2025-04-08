@@ -1,73 +1,126 @@
 name: Update Pfaedle files
 
 on:
-  workflow_call:
+   workflow_call:
 
 jobs:
-  upload-release-asset:
-    runs-on: self-hosted
-    permissions:
-      contents: write
-      packages: write
+   upload-release-asset:
+     runs-on: self-hosted
+     permissions:
+       contents: write
+       packages: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
 
-      - name: Download unzip and zip
-        run: sudo apt install unzip zip
+       - name: Download unzip and zip
+         run: sudo apt install unzip zip
 
-      - name: Install OSM tools
-        run: sudo apt install osmium-tool osmctools
+       - name: Install OSM tools
+         run: sudo apt install osmium-tool osmctools
 
-      - name: Build Pfaedle
-        run: |
-          if ! command -v pfaedle &> /dev/null; then
-            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
-            cd pfaedle
-            mkdir build && cd build
-            cmake ..
-            make -j
-            sudo make install
-            cd ..
-          else
-            echo "Pfaedle is already installed."
-          fi
+       - name: Build Pfaedle
+         run: |
+           if ! command -v pfaedle &> /dev/null; then
+             git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+             cd pfaedle
+             mkdir build && cd build
+             cmake ..
+             make -j
+             sudo make install
+             cd ..
+           else
+             echo "Pfaedle is already installed."
+           fi
 
-      - name: Download osm files
-        run: |
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://download.geofabrik.de/europe/switzerland-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert switzerland-latest.osm.pbf -o=switzerland-latest.osm
+       - name: Download osm files
+         run: |
+           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+           wget https://download.geofabrik.de/europe/switzerland-latest.osm.pbf
 
-      - name: Download Swiss GTFS
-        run: wget https://data.opentransportdata.swiss/en/dataset/timetable-2025-gtfs2020/permalink -O swiss_gtfs.zip
+       - name: Convert OSM files
+         run: |
+           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+           osmconvert switzerland-latest.osm.pbf -o=switzerland-latest.osm
 
-      - name: Unzip Swiss GTFS
-        run: unzip swiss_gtfs.zip -d swiss_gtfs
+       - name: Download Swiss GTFS
+         id: download_swiss_gtfs
+         run: |
+           wget https://data.opentransportdata.swiss/en/dataset/timetable-2025-gtfs2020/permalink -O swiss_gtfs.zip
+           echo "SWISS_GTFS_FILE=swiss_gtfs.zip" >> $GITHUB_OUTPUT
 
-      - name: Run Pfaedle Swiss Bus network
-        run: pfaedle -x switzerland-latest.osm swiss_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+       - name: Calculate Swiss GTFS MD5 Hash
+         id: calculate_swiss_gtfs_md5
+         run: |
+           filepath="${{ steps.download_swiss_gtfs.outputs.SWISS_GTFS_FILE }}"
+           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+           echo "SWISS_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+           echo "SWISS_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+           echo "$md5_hash" > "$filepath.md5"
 
-      - name: Run Pfaedle Swiss Rail network
-        run: pfaedle -x railonly-europe-latest.osm swiss_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+       - name: Download Existing Swiss GTFS MD5 Hash
+         id: download_existing_swiss_gtfs_md5
+         run: |
+           ASSET_NAME="${{ steps.download_swiss_gtfs.outputs.SWISS_GTFS_FILE }}"
+           MD5_ASSET_NAME="${ASSET_NAME}.md5"
+           RELEASE_TAG="latest"
+           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+           if wget --spider --quiet "$RELEASE_URL"; then
+             echo "SWISS_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+             wget --quiet -O existing_swiss_gtfs_md5.txt "$RELEASE_URL"
+             EXISTING_SWISS_GTFS_MD5=$(cat existing_swiss_gtfs_md5.txt)
+             echo "EXISTING_SWISS_GTFS_MD5=$EXISTING_SWISS_GTFS_MD5" >> $GITHUB_OUTPUT
+           else
+             echo "SWISS_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+           fi
 
-      - name: Zip swiss gtfs
-        run:  zip -r -9 swiss_gtfs_pfaedle.zip swiss_gtfs/*
+       - name: Run Pfaedle and Zip (Conditional)
+         if: steps.download_existing_swiss_gtfs_md5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_swiss_gtfs_md5.outputs.SWISS_GTFS_MD5 != steps.download_existing_swiss_gtfs_md5.outputs.EXISTING_SWISS_GTFS_MD5
+         run: |
+           # Unzip Swiss GTFS
+           unzip swiss_gtfs.zip -d swiss_gtfs
 
-      - name: Upload Asset Swiss GTFS
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: swiss_gtfs_pfaedle.zip # Replace with the actual path to your file
-          ASSET_NAME: swiss_gtfs_pfaedle.zip     # Replace with the desired name of the asset
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
+           # Run Pfaedle Swiss Bus network
+           pfaedle -x switzerland-latest.osm swiss_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+
+           # Run Pfaedle Swiss Rail network
+           pfaedle -x railonly-europe-latest.osm swiss_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+
+           # Zip swiss gtfs
+           zip -r -9 swiss_gtfs_pfaedle.zip swiss_gtfs/*
+         id: run_pfaedle_zip
+
+       - name: Upload Assets Swiss GTFS
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_TOKEN: ${{ github.token }}
+           ASSET_PATH: swiss_gtfs_pfaedle.zip
+           MD5_ASSET_PATH: ${{ steps.calculate_swiss_gtfs_md5.outputs.SWISS_GTFS_MD5_FILE }}
+           RELEASE_TAG: latest
+         run: |
+           NEW_MD5="${{ steps.calculate_swiss_gtfs_md5.outputs.SWISS_GTFS_MD5 }}"
+           MD5_EXISTS="${{ steps.download_existing_swiss_gtfs_md5.outputs.SWISS_GTFS_MD5_EXISTS }}"
+           EXISTING_MD5="${{ steps.download_existing_swiss_gtfs_md5.outputs.EXISTING_SWISS_GTFS_MD5 }}"
+           ASSET_TO_UPLOAD="${{ steps.run_pfaedle_zip.outputs.result == 'success' && steps.run_pfaedle_zip.outcome == 'success' }}"
+
+           if [[ "$MD5_EXISTS" == "false" ]]; then
+             echo "No existing MD5 found for Swiss GTFS. Uploading both file and MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             else
+               echo "Pfaedle and zip were skipped, not uploading main asset."
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+             echo "Existing MD5 for Swiss GTFS is different. Uploading both file and new MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             else
+               echo "Pfaedle and zip were skipped, not uploading main asset."
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           else
+             echo "Existing MD5 for Swiss GTFS matches the new MD5. Skipping upload."
+           fi
+         shell: bash
