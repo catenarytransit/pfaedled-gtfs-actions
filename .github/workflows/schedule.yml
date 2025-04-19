@@ -17,5 +17,7 @@ jobs:
     uses: ./.github/workflows/download_delfi_raw.yaml
   gb-update:
     uses: ./.github/workflows/gbbusupdate.yml
+  mvv-update:
+    uses: ./.github/workflows/mvv_pfaedle.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
