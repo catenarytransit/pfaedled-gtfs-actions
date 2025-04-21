@@ -286,3 +286,29 @@ jobs:
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != ''
+
+      - name: Name download Flix EU
+        uses: wei/wget@v1
+        with:
+          args: http://gtfs.gis.flix.tech/gtfs_generic_eu.zip
+
+      - name: Unzip EU Flix
+        run: unzip gtfs_generic_eu.zip -d flix_eu
+
+      - name: pfaedle Flix EU
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm flix_eu -F --inplace --mots rail --drop-shapes true
+
+      - name: Zip Flix EU
+        run: zip -9 -r flix_eu-pfaedle.zip flix_eu/*
+
+      - name: Upload Asset Flix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: flix_eu-pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
