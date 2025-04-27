@@ -1,4 +1,4 @@
-name: Manual Update Trigger
+name: Manual Great Britain Update Trigger
 
 on:
   workflow_dispatch:
