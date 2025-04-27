@@ -14,6 +14,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
       - name: Download unzip and zip
         run: sudo apt install unzip zip
 
@@ -34,6 +37,14 @@ jobs:
             echo "Pfaedle is already installed."
           fi
 
+      - name: Download GTFS fixer
+        run: git clone https://github.com/catenarytransit/gtfs-fixer
+
+      - name: Build GTFS fixer
+        run: |
+          cd gtfs-fixer
+          cargo build --release
+
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-great-britain-latest.osm.pbf
@@ -47,6 +58,9 @@ jobs:
 
       - name: Unzip GB GTFS
         run: unzip gb_bus_gtfs.zip -d gb_bus_gtfs
+
+      - name: Run GTFS fixer
+        run: ./gtfs-fixer/target/release/gtfs-fixer gb_bus_gtfs/
 
       - name: Run Pfaedle GB Bus and Metros network
         run: pfaedle -x great-britain-latest.osm gb_bus_gtfs -F --inplace --write-colors --drop-shapes true
