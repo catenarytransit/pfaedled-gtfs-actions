@@ -1,0 +1,118 @@
+name: Update Pfaedle files
+
+on:
+   workflow_call:
+
+jobs:
+   upload-release-asset:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: write
+       packages: write
+
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
+
+       - name: Download unzip and zip
+         run: sudo apt install unzip zip
+
+       - name: Install OSM tools
+         run: sudo apt install osmium-tool osmctools
+
+       - name: Build Pfaedle
+         run: |
+           if ! command -v pfaedle &> /dev/null; then
+             git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+             cd pfaedle
+             mkdir build && cd build
+             cmake ..
+             make -j
+             sudo make install
+             cd ..
+           else
+             echo "Pfaedle is already installed."
+           fi
+
+       - name: Download osm files
+         run: |
+           wget https://download.geofabrik.de/north-america/us/illinois-latest.osm.pbf
+
+       - name: Convert OSM files
+         run: |
+           osmconvert illinois-latest.osm.pbf -o=illinois-latest.osm
+
+       - name: Download Chicago GTFS
+         id: download_cta_gtfs
+         run: |
+           wget https://www.transitchicago.com/downloads/sch_data/google_transit.zip
+           echo "CTA_GTFS_FILE=cta_gtfs.zip" >> $GITHUB_OUTPUT
+
+       - name: Calculate CTA GTFS MD5 Hash
+         id: calculate_CTA_GTFS_MD5
+         run: |
+           filepath="${{ steps.download_cta_gtfs.outputs.CTA_GTFS_FILE }}"
+           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+           echo "CTA_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+           echo "CTA_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+           echo "$md5_hash" > "$filepath.md5"
+
+       - name: Download Existing CTA GTFS MD5 Hash
+         id: download_existing_CTA_GTFS_MD5
+         run: |
+           ASSET_NAME="${{ steps.download_cta_gtfs.outputs.CTA_GTFS_FILE }}"
+           MD5_ASSET_NAME="${ASSET_NAME}.md5"
+           RELEASE_TAG="latest"
+           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+           if wget --spider --quiet "$RELEASE_URL"; then
+             echo "CTA_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+             wget --quiet -O existing_CTA_GTFS_MD5.txt "$RELEASE_URL"
+             EXISTING_CTA_GTFS_MD5=$(cat existing_CTA_GTFS_MD5.txt)
+             echo "EXISTING_CTA_GTFS_MD5=$EXISTING_CTA_GTFS_MD5" >> $GITHUB_OUTPUT
+           else
+             echo "CTA_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+           fi
+
+       - name: Run Pfaedle and Zip (Conditional)
+         if: steps.download_existing_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5_EXISTS == 'false' || steps.calculate_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5 != steps.download_existing_CTA_GTFS_MD5.outputs.EXISTING_CTA_GTFS_MD5
+         run: |
+           # Unzip CTA GTFS
+           unzip cta_gtfs.zip -d cta_gtfs
+          
+           # Zip swiss gtfs
+           zip -r -9 cta_gtfs_pfaedle.zip cta_gtfs/*
+         id: run_pfaedle_zip
+
+       - name: Upload Assets Swiss GTFS
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_TOKEN: ${{ github.token }}
+           ASSET_PATH: cta_gtfs_pfaedle.zip
+           MD5_ASSET_PATH: ${{ steps.calculate_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5_FILE }}
+           RELEASE_TAG: latest
+         run: |
+           NEW_MD5="${{ steps.calculate_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5 }}"
+           MD5_EXISTS="${{ steps.download_existing_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5_EXISTS }}"
+           EXISTING_MD5="${{ steps.download_existing_CTA_GTFS_MD5.outputs.EXISTING_CTA_GTFS_MD5 }}"
+           ASSET_TO_UPLOAD="${{ steps.run_pfaedle_zip.outputs.result == 'success' && steps.run_pfaedle_zip.outcome == 'success' }}"
+
+           if [[ "$MD5_EXISTS" == "false" ]]; then
+             echo "No existing MD5 found for cta GTFS. Uploading both file and MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             else
+               echo "Pfaedle and zip were skipped, not uploading main asset."
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+             echo "Existing MD5 for cta GTFS is different. Uploading both file and new MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             else
+               echo "Pfaedle and zip were skipped, not uploading main asset."
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           else
+             echo "Existing MD5 for cta GTFS matches the new MD5. Skipping upload."
+           fi
+         shell: bash
