@@ -19,5 +19,7 @@ jobs:
     uses: ./.github/workflows/gbbusupdate.yml
   mvv-update:
     uses: ./.github/workflows/mvv_pfaedle.yml
+  chicago-update:
+    uses: ./.github/workflows/cta_update.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
