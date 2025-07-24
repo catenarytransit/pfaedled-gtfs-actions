@@ -59,7 +59,7 @@ jobs:
            node only_keep_route_type_1.js cta_gtfs/
           
            # Zip cta gtfs
-           zip -r -9 cta_gtfs_pfaedle.zip cta_gtfs/*
+           zip -r -9 cta_gtfs_railonly.zip cta_gtfs/*
          id: run_pfaedle_zip
 
        - name: Upload Assets CTA GTFS
