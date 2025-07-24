@@ -66,7 +66,7 @@ jobs:
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
            GH_TOKEN: ${{ github.token }}
-           ASSET_PATH: cta_gtfs_pfaedle.zip
+           ASSET_PATH: cta_gtfs_railonly.zip
            MD5_ASSET_PATH: ${{ steps.calculate_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5_FILE }}
            RELEASE_TAG: latest
          run: |
