@@ -68,63 +68,23 @@ jobs:
 
       - name: Download SNCF files
         run: |
-          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export_gtfs_voyages.zip
-          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-intercites-gtfs-last.zip
-          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-ter-gtfs-last.zip
+          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-opendata-sncf-gtfs.zip
 
       - name: Extract SNCF
         run: |
-          unzip export_gtfs_voyages.zip -d export_gtfs_voyages
-          unzip export-intercites-gtfs-last.zip -d sncf_intercites 
-          unzip export-ter-gtfs-last.zip -d sncf_ter
+          unzip export-opendata-sncf-gtfs.zip -d sncf
 
-      - name: Run pfaedle SNCF voyages
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm export_gtfs_voyages  -F --inplace
+      - name: Run pfaedle SNCF
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf  -F --inplace
 
-      - name: Run pfaedle SNCF intercites
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_intercites  -F --inplace --write-colors
+      - name: Zip pfaedle SNCF
+        run: zip -9 -r sncf_pfaedle.zip sncf/*
 
-      - name: Run pfaedle SNCF TER
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf_ter -F --inplace
-
-      - name: Zip pfaedle SNCF Voyages
-        run: zip -9 -r export_gtfs_voyages_pfaedle.zip export_gtfs_voyages/*
-
-      - name: Zip pfaedle SNCF intercites
-        run: zip -9 -r sncf_intercites_pfaedle.zip sncf_intercites/*
-
-      - name: Zip pfaedle SNCF TER
-        run: zip -9 -r sncf_ter_pfaedle.zip sncf_ter/*
-
-      - name: Upload SNCF Voyages results
+      - name: Upload SNCF results
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: export_gtfs_voyages_pfaedle.zip # Replace with the actual path to your file
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != ''
-
-      - name: Upload SNCF TER results
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: sncf_ter_pfaedle.zip # Replace with the actual path to your file
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != ''
-
-      - name: Upload SNCF intercites results
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: sncf_intercites_pfaedle.zip # Replace with the actual path to your file
+          ASSET_PATH: sncf_pfaedle.zip # Replace with the actual path to your file
           RELEASE_TAG: latest
         run: |
           echo "Uploading asset: $ASSET_PATH to release latest"
