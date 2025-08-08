@@ -66,32 +66,6 @@ jobs:
         with:
           args: https://gtfs.eurostar.com/assets/gtfs.zip -O eurostar.zip
 
-      - name: Download SNCF files
-        run: |
-          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-opendata-sncf-gtfs.zip
-
-      - name: Extract SNCF
-        run: |
-          unzip export-opendata-sncf-gtfs.zip -d sncf
-
-      - name: Run pfaedle SNCF
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf  -F --inplace
-
-      - name: Zip pfaedle SNCF
-        run: zip -9 -r sncf_pfaedle.zip sncf/*
-
-      - name: Upload SNCF results
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: sncf_pfaedle.zip # Replace with the actual path to your file
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != ''
-
       - name: Download SNCB GTFS
         run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip 
 
