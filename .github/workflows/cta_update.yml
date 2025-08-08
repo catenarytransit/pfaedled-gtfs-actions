@@ -1,4 +1,4 @@
-name: Update Pfaedle files
+name: Update Chicago Rail Only files
 
 on:
    workflow_call:
@@ -48,7 +48,7 @@ jobs:
              echo "CTA_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
            fi
 
-       - name: Run Pfaedle and Zip (Conditional)
+       - name: Extract, CSV removal tool, and rezsip
          if: steps.download_existing_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5_EXISTS == 'false' || steps.calculate_CTA_GTFS_MD5.outputs.CTA_GTFS_MD5 != steps.download_existing_CTA_GTFS_MD5.outputs.EXISTING_CTA_GTFS_MD5
          run: |
            # Unzip CTA GTFS
