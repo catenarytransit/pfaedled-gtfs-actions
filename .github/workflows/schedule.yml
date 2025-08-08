@@ -21,5 +21,7 @@ jobs:
     uses: ./.github/workflows/mvv_pfaedle.yml
   chicago-update:
     uses: ./.github/workflows/cta_update.yml
+  sncf-update:
+    uses: ./.github/workflows/sncfupdate.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
