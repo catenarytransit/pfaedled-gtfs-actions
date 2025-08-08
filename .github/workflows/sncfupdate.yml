@@ -1,0 +1,75 @@
+name: Update Pfaedle file SNCF
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip -y
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools -y
+
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+
+      - name: Download Hong Kong GTFS
+        run: wget https://static.data.gov.hk/td/pt-headway-tc/gtfs.zip -O hk_gtfs.zip
+
+      - name: Download SNCF files
+        run: |
+          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-opendata-sncf-gtfs.zip
+
+      - name: Extract SNCF
+        run: |
+          unzip export-opendata-sncf-gtfs.zip -d sncf
+
+      - name: Run pfaedle SNCF
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf  -F --inplace
+
+      - name: Zip pfaedle SNCF
+        run: zip -9 -r sncf_pfaedle.zip sncf/*
+
+      - name: Upload SNCF results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: sncf_pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
