@@ -45,7 +45,7 @@ jobs:
         run: |
           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 
-      - name: Download Hong Kong GTFS
+      - name: Download SNCF GTFS
         run: wget https://static.data.gov.hk/td/pt-headway-tc/gtfs.zip -O hk_gtfs.zip
 
       - name: Download SNCF files
