@@ -49,7 +49,7 @@ jobs:
 
       - name: Run czptt pfaedle
         run: |
-          pfaedle -x railonly-europe-latest.osm czptt-gtfs -F --inplace
+          pfaedle -x railonly-europe-latest.osm czptt-gtfs -F --inplace --no-trie
 
       - name: Zip czptt gtfs
         run: zip -9 -r czptt-pfaedle.zip czptt-gtfs/*
