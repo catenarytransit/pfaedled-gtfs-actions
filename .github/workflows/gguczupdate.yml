@@ -1,0 +1,72 @@
+name: Update Pfaedle files GGUCZ
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+          
+      - name: Filter Socal rail entwork
+        run: |
+          osmium tags-filter -o railonly-socal-latest.osm.pbf --expressions=railway-filter.txt socal-latest.osm.pbf
+
+      - name: Convert PBF to XML
+        run: osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+
+      - name: Download ggu cz gtfs
+        run: wget https://data.jr.ggu.cz/results/latest/CZPTT_GTFS.zip -O czptt.zip
+
+      - name: Unzip czptt
+        run: unzip czptt.zip -d czptt-gtfs
+
+      - name: Run czptt pfaedle
+        run: |
+          pfaedle -x railonly-europe-latest.osm czptt-gtfs -F --inplace
+
+      - name: Zip czptt gtfs
+        run: zip -9 -r czptt-pfaedle.zip czptt-gtfs/*
+
+      - name: Upload czptt Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: czptt-pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: czptt-pfaedle.zip     # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
