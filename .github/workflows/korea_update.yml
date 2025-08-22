@@ -63,6 +63,7 @@ jobs:
           cd 2024_korea
           mv */* .
           sed -i 's/Korea/Asia\/Seoul/g' agency.txt
+          sed -i 's/.000000000//g' stop_times.txt
           cd ..
 
       - name: Gtfs tidy
@@ -74,7 +75,7 @@ jobs:
         run: pfaedle -x south-korea-latest.osm 2024_korea -F --inplace --write-colors --drop-shapes true
 
       - name: Zip sk gtfs
-        run:  zip -r -9 2024_korea_pfaedle.zip 2024-korea/*
+        run:  zip -r -9 2024_korea_pfaedle.zip 2024_korea/*
 
       - name: Upload Asset Sk GTFS
         env:
