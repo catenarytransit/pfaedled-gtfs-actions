@@ -62,6 +62,7 @@ jobs:
         run: |
           cd 2024_korea
           mv */* .
+          sed -i 's/Korea/Asia\/Seoul/g' agency.txt
           cd ..
 
       - name: Gtfs tidy
