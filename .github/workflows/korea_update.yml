@@ -56,10 +56,10 @@ jobs:
         run: wget https://github.com/catenarytransit/agency-gtfs-mirror/releases/download/latest/2024-seoul.zip
 
       - name: Unzip Sk GTFS
-        run: unzip 2024-seoul.zip -d 2024-korea
+        run: unzip 2024-seoul.zip -d 2024_korea
 
       - name: Run Pfaedle Sk Bus network
-        run: pfaedle -x south-korea-latest.osm 2024-korea -F --inplace --write-colors --drop-shapes true
+        run: pfaedle -x south-korea-latest.osm 2024_korea -F --inplace --write-colors --drop-shapes true
 
       - name: Zip sk gtfs
         run:  zip -r -9 2024_korea_pfaedle.zip 2024-korea/*
