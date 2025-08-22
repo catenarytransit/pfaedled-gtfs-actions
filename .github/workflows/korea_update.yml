@@ -58,6 +58,12 @@ jobs:
       - name: Unzip Sk GTFS
         run: unzip 2024-seoul.zip -d 2024_korea
 
+      - name: Flatten directory
+        run: |
+          cd 2024_korea
+          mv */* .
+          cd ..
+
       - name: Run Pfaedle Sk Bus network
         run: pfaedle -x south-korea-latest.osm 2024_korea -F --inplace --write-colors --drop-shapes true
 
