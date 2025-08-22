@@ -1,0 +1,78 @@
+name: Update Korea files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip -y
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools -y
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.13.1'
+
+      - name: Install GTFS tidy
+        run: |
+          go install github.com/patrickbr/gtfstidy@latest
+          gtfstidy --help
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/asia/south-korea-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert south-korea-latest.osm.pbf -o=south-korea-latest.osm
+
+      - name: Download Sk GTFS
+        run: wget https://github.com/catenarytransit/agency-gtfs-mirror/releases/download/latest/2024-seoul.zip
+
+      - name: Unzip Sk GTFS
+        run: unzip 2024-seoul.zip -d 2024-korea
+
+      - name: Run Pfaedle Sk Bus network
+        run: pfaedle -x south-korea-latest.osm 2024-korea -F --inplace --write-colors --drop-shapes true
+
+      - name: Zip sk gtfs
+        run:  zip -r -9 2024_korea_pfaedle.zip 2024-korea/*
+
+      - name: Upload Asset Sk GTFS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: 2024_korea_pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: 2024_korea_pfaedle.zip # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
