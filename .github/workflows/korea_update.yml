@@ -66,8 +66,8 @@ jobs:
 
       - name: Gtfs tidy
         run: | 
-          gtfstidy --fix -s -D -o de_gtfs_tidy/ de_gtfs/
-          mv de_gtfs_tidy/* de_gtfs/
+          gtfstidy --fix -s -D -o 2024_korea_tidy/ 2024_korea/
+          mv 2024_korea_tidy/* 2024_korea/
 
       - name: Run Pfaedle Sk Bus network
         run: pfaedle -x south-korea-latest.osm 2024_korea -F --inplace --write-colors --drop-shapes true
