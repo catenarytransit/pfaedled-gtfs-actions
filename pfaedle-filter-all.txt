@@ -7,6 +7,8 @@ r/route=tram
 r/route=light_rail
 r/route=subway
 r/route=narrow_gague
+nwr/route=ferry
+nwr/amenity=ferry_terminal
 nwr/public_transport=stop_area,rel_flat
 nwr/ferry
 nwr/waterway=river
