@@ -23,5 +23,7 @@ jobs:
     uses: ./.github/workflows/cta_update.yml
   sncf-update:
     uses: ./.github/workflows/sncfupdate.yml
+  francais:
+    uses: ./.github/workflows/france_services_locaux.yaml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
