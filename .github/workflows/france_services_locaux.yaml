@@ -43,7 +43,7 @@ jobs:
           
       - name: Convert OSM files
         run: |
-          osmconvert france-latest.osm.pbf.pbf -o=france-latest.osm
+          osmconvert france-latest.osm.pbf -o=france-latest.osm
 
       - name: Download Lille GTFS
         run: wget https://media.ilevia.fr/opendata/gtfs.zip -O lille.zip
