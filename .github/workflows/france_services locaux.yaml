@@ -1,0 +1,71 @@
+name: Update Pfaedle file Lille
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip -y
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools -y
+
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/europe/france-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert france-latest.osm.pbf.pbf -o=france-latest.osm
+
+      - name: Download Lille GTFS
+        run: wget https://media.ilevia.fr/opendata/gtfs.zip -O lille.zip
+
+      - name: Extract Lille
+        run: |
+          unzip lille.zip -d lille
+
+      - name: Run pfaedle Lille
+        run: ./pfaedle/build/pfaedle -x france-latest.osm lille -F --inplace
+
+      - name: Zip pfaedle Lille
+        run: zip -9 -r lille_pfaedle.zip lille/*
+
+      - name: Upload Lille results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: lille_pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
