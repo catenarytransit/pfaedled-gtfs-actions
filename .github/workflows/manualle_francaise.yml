@@ -1,0 +1,12 @@
+name: Déclencheur de mise à jour manuelle
+
+on:
+  workflow_dispatch:
+    
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  call-update:
+    uses: ./.github/workflows/france_services_locaux.yaml
