@@ -67,7 +67,7 @@ jobs:
           args: https://gtfs.eurostar.com/assets/gtfs.zip -O eurostar.zip
 
       - name: Download SNCB GTFS
-        run: wget https://sncb-opendata.hafas.de/gtfs/static/c21ac6758dd25af84cca5b707f3cb3de -O sncb_gtfs.zip 
+        run: wget https://sncb-opendata.hafas.de/gtfs/static/d22ad6759ee25bg84ddb6c818g4dc4de_TC -O sncb_gtfs.zip 
 
       - name: Download PC GTFS
         run: wget https://publico.cp.pt/gtfs/gtfs.zip -O pc_gtfs.zip
