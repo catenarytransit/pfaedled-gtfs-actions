@@ -1,0 +1,77 @@
+name: Update Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
+
+      - name: Build Pfaedle
+        run: |
+          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+          cd pfaedle
+          mkdir build && cd build
+          cmake ..
+          make -j
+          sudo make install
+          cd ..
+
+      - name: Current dir
+        run: |
+          echo "current dir"
+          echo $(pwd)
+          echo "ls"
+          ls
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/europe/portugal-latest.osm.pbf
+
+      - name: Filter Portugal
+        run: |
+          osmium tags-filter -o railonly-portugal-latest.osm.pbf --expressions=railway-filter.txt portugal-latest.osm.pbf
+
+      - name: Convert OSM files
+        run: |
+          osmconvert railonly-portugal-latest.osm.pbf -o=railonly-portugal-latest.osm
+
+      - name: Download PC GTFS
+        run: wget https://publico.cp.pt/gtfs/gtfs.zip -O pc_gtfs.zip
+
+      - name: Unzip PC GTFS
+        run: unzip pc_gtfs.zip -d pc_gtfs
+
+      - name: Run pfaedle Portugal
+        run: ./pfaedle/build/pfaedle -x railonly-portugal-latest.osm pc_gtfs -F --inplace --write-colors
+
+      - name: Zip PC results
+        run: zip -9 -r pc_gtfs_pfaedle.zip pc_gtfs/*
+
+      - name: Upload PC results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: pc_gtfs_pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
