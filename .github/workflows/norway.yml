@@ -42,14 +42,12 @@ jobs:
 
       - name: Download osm files
         run: |
-          wget https://download.geofabrik.de/europe/norway-latest.osm.pbf
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-norway-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
           wget https://raw.githubusercontent.com/catenarytransit/pfaedled-gtfs-actions/refs/heads/main/pfaedle-filter-all.txt          
 
       - name: Convert OSM files
         run: |
-          osmium tags-filter -o pfaedle-filtered-norway-latest.osm.pbf --expressions=pfaedle-filter-all.txt norway-latest.osm.pbf
-          rm norway-latest.osm.pbf
           osmconvert pfaedle-filtered-norway-latest.osm.pbf -o=norway-latest.osm
           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 
