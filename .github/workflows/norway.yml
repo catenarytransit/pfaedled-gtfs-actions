@@ -53,7 +53,7 @@ jobs:
       - name: Download Norway GTFS
         run: wget https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_norway-aggregated-gtfs.zip -O norway.zip
 
-      - name: Unzip PC GTFS
+      - name: Unzip Norway GTFS
         run: unzip norway.zip -d norway_gtfs
 
       - name: Run pfaedle Norway
@@ -64,7 +64,7 @@ jobs:
       - name: Zip Norway results
         run: zip -9 -r norway_gtfs_pfaedle.zip norway_gtfs/*
 
-      - name: Upload PC results
+      - name: Upload Norway results
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
