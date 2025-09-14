@@ -67,8 +67,8 @@ jobs:
 
       - name: Run pfaedle Norway
         run: |
-          ./pfaedle/build/pfaedle -x norway-latest.osm norway_gtfs -F --inplace --write-colors  -F --inplace --mots metro,streetcar,tram,subway,coach,monorail,trolley,trolleybus,bus
-          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm norway_gtfs -F --inplace --write-colors  -F --inplace --mots rail
+          ./pfaedle/build/pfaedle -x norway-latest.osm norway_gtfs -F --inplace --write-colors  --mots metro,streetcar,tram,subway,coach,monorail,trolley,trolleybus,bus
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm norway_gtfs -F --inplace --write-colors  --mots rail
 
       - name: Zip Norway results
         run: zip -9 -r norway_gtfs_pfaedle.zip norway_gtfs/*
