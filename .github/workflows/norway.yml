@@ -1,0 +1,77 @@
+name: Update Norway Pfaedle files
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
+
+      - name: Build Pfaedle
+        run: |
+          git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+          cd pfaedle
+          mkdir build && cd build
+          cmake ..
+          make -j
+          sudo make install
+          cd ..
+
+      - name: Current dir
+        run: |
+          echo "current dir"
+          echo $(pwd)
+          echo "ls"
+          ls
+
+      - name: Download osm files
+        run: |
+          wget https://download.geofabrik.de/europe/norway-latest.osm.pbf
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert norway-latest.osm.pbf -o=norway-latest.osm
+          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+
+      - name: Download Norway GTFS
+        run: wget https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_norway-aggregated-gtfs.zip -O norway.zip
+
+      - name: Unzip PC GTFS
+        run: unzip norway.zip -d norway_gtfs
+
+      - name: Run pfaedle Norway
+        run: |
+          ./pfaedle/build/pfaedle -x norway-latest.osm norway_gtfs -F --inplace --write-colors  -F --inplace --mots metro,streetcar,tram,subway,coach,monorail,trolley,trolleybus,bus
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm norway_gtfs -F --inplace --write-colors  -F --inplace --mots rail
+
+      - name: Zip Norway results
+        run: zip -9 -r norway_gtfs_pfaedle.zip norway_gtfs/*
+
+      - name: Upload PC results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: norway_gtfs_pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
