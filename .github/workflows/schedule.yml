@@ -27,5 +27,7 @@ jobs:
     uses: ./.github/workflows/france_services_locaux.yaml
   pc:
     uses: ./.github/workflows/pc_update.yml
+  norway:
+    uses: ./.github/workflows/norway.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
