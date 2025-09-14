@@ -43,8 +43,7 @@ jobs:
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-norway-latest.osm.pbf
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://raw.githubusercontent.com/catenarytransit/pfaedled-gtfs-actions/refs/heads/main/pfaedle-filter-all.txt          
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf        
 
       - name: Convert OSM files
         run: |
@@ -56,6 +55,12 @@ jobs:
 
       - name: Unzip Norway GTFS
         run: unzip norway.zip -d norway_gtfs
+
+      - name: Remove excessively long cruise
+        run: |
+          sed -i '/^HAV:/d' norway_gtfs/stop_times.txt
+          sed -i '/^HAV:/d' norway_gtfs/trips.txt
+          sed -i '/^HAV:/d' norway_gtfs/routes.txt
 
       - name: Run pfaedle Norway
         run: |
