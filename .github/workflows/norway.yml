@@ -61,6 +61,9 @@ jobs:
           sed -i '/^HAV:/d' norway_gtfs/stop_times.txt
           sed -i '/^HAV:/d' norway_gtfs/trips.txt
           sed -i '/^HAV:/d' norway_gtfs/routes.txt
+          sed -i '/^HUR:/d' norway_gtfs/stop_times.txt
+          sed -i '/^HUR:/d' norway_gtfs/trips.txt
+          sed -i '/^HUR:/d' norway_gtfs/routes.txt
 
       - name: Run pfaedle Norway
         run: |
