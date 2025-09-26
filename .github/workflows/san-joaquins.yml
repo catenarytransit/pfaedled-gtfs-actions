@@ -1,0 +1,119 @@
+name: Update Pfaedle files San Joaquin
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Utilities
+        run: sudo apt-get update && sudo apt-get install -y unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt-get install -y osmium-tool osmctools
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ../..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download OSM file
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-california-latest.osm.pbf
+
+      - name: Convert OSM file
+        run: |
+          osmconvert pfaedle-filtered-california-latest.osm.pbf -o=pfaedle-filtered-california-latest.osm
+
+      - name: Download San Joaquins GTFS
+        id: download_san_joaquins_gtfs
+        run: |
+          wget https://d34tiw64n5z4oh.cloudfront.net/wp-content/uploads/SJJPA_03182025-1.zip -O san_joaquins_gtfs.zip
+          echo "SAN_JOAQUINS_GTFS_FILE=san_joaquins_gtfs.zip" >> $GITHUB_OUTPUT
+
+      - name: Calculate San Joaquins GTFS MD5 Hash
+        id: calculate_san_joaquins_gtfs_md5
+        run: |
+          filepath="${{ steps.download_san_joaquins_gtfs.outputs.SAN_JOAQUINS_GTFS_FILE }}"
+          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+          echo "SAN_JOAQUINS_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+          echo "SAN_JOAQUINS_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+          echo "$md5_hash" > "$filepath.md5"
+
+      - name: Download Existing San Joaquins GTFS MD5 Hash
+        id: download_existing_san_joaquins_gtfs_md5
+        run: |
+          ASSET_NAME="${{ steps.download_san_joaquins_gtfs.outputs.SAN_JOAQUINS_GTFS_FILE }}"
+          MD5_ASSET_NAME="${ASSET_NAME}.md5"
+          RELEASE_TAG="latest"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+          if wget --spider --quiet "$RELEASE_URL"; then
+            echo "SAN_JOAQUINS_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+            wget --quiet -O existing_san_joaquins_gtfs_md5.txt "$RELEASE_URL"
+            EXISTING_SAN_JOAQUINS_GTFS_MD5=$(cat existing_san_joaquins_gtfs_md5.txt)
+            echo "EXISTING_SAN_JOAQUINS_GTFS_MD5=$EXISTING_SAN_JOAQUINS_GTFS_MD5" >> $GITHUB_OUTPUT
+          else
+            echo "SAN_JOAQUINS_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Pfaedle and Zip (Conditional)
+        if: steps.download_existing_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5_EXISTS == 'false' || steps.calculate_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5 != steps.download_existing_san_joaquins_gtfs_md5.outputs.EXISTING_SAN_JOAQUINS_GTFS_MD5
+        id: run_pfaedle_zip
+        run: |
+          # Unzip San Joaquins GTFS
+          unzip san_joaquins_gtfs.zip -d san_joaquins_gtfs
+
+          # Run Pfaedle on San Joaquins network
+          pfaedle -x pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail,bus,ferry --write-colors
+
+          # Zip the processed San Joaquins GTFS
+          zip -r -9 san_joaquins_gtfs_pfaedle.zip san_joaquins_gtfs/
+
+      - name: Upload San Joaquins GTFS Assets
+        if: steps.run_pfaedle_zip.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: san_joaquins_gtfs_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5_FILE }}
+          RELEASE_TAG: latest
+        run: |
+          NEW_MD5="${{ steps.calculate_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_san_joaquins_gtfs_md5.outputs.EXISTING_SAN_JOAQUINS_GTFS_MD5 }}"
+          
+          if [[ "$MD5_EXISTS" == "false" ]] || [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+            if [[ "$MD5_EXISTS" == "false" ]]; then
+              echo "No existing MD5 found for San Joaquins GTFS. Uploading new assets."
+            else
+              echo "Existing MD5 for San Joaquins GTFS is different. Uploading updated assets."
+            fi
+            
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+              gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+            else
+              echo "Error: Processed asset file '$ASSET_PATH' not found. Skipping upload."
+              exit 1
+            fi
+          else
+            echo "Existing MD5 for San Joaquins GTFS matches the new MD5. Skipping upload."
+          fi
+        shell: bash
