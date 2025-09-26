@@ -29,5 +29,7 @@ jobs:
     uses: ./.github/workflows/pc_update.yml
   norway:
     uses: ./.github/workflows/norway.yml
+  san-joaquins:
+    uses: ./.github/workflows/san-joaquins.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
