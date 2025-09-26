@@ -1,0 +1,12 @@
+name: Manual San Joaquins Update Trigger
+
+on:
+  workflow_dispatch:
+    
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  san-joaquins:
+    uses: ./.github/workflows/san-joaquins.yml
