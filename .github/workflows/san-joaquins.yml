@@ -80,6 +80,9 @@ jobs:
           # Unzip San Joaquins GTFS
           unzip san_joaquins_gtfs.zip -d san_joaquins_gtfs
 
+          # Delete empty stops.txt lines
+          sed -i '/^$/d' san_joaquins_gtfs/stops.txt
+
           # Run Pfaedle on San Joaquins network
           pfaedle -x pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail --write-colors --drop-shapes
 
