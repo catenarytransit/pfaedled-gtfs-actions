@@ -197,32 +197,6 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != ''
 
-      - name: Download CZPTT GTFS
-        uses: wei/wget@v1
-        with:
-          args: https://data.jr.ggu.cz/results/latest/CZPTT_GTFS.zip -O czptt_gtfs.zip
-
-      - name: Unzip CZPTT
-        run: unzip czptt_gtfs.zip -d czptt_gtfs
-
-      - name: Pfaedle CZPTT
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm czptt_gtfs -F --inplace --mots rail --drop-shapes true
-
-      - name: Zip CZPTT
-        run: zip -9 -r czptt_gtfs-pfaedle.zip czptt_gtfs/*
-
-      - name: Upload Asset CZPTT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: czptt_gtfs-pfaedle.zip # Replace with the actual path to your file
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != ''
-
       - name: Name download Flix EU
         uses: wei/wget@v1
         with:
