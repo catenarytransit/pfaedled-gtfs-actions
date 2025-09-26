@@ -84,7 +84,7 @@ jobs:
           sed -i '/^$/d' san_joaquins_gtfs/stops.txt
 
           # Run Pfaedle on San Joaquins network
-          pfaedle -x pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail --write-colors --drop-shapes
+          pfaedle -x -D pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail --write-colors
 
           # Zip the processed San Joaquins GTFS
           zip -r -9 san_joaquins_gtfs_pfaedle.zip san_joaquins_gtfs/
