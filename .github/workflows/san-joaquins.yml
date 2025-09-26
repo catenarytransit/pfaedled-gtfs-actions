@@ -81,7 +81,7 @@ jobs:
           unzip san_joaquins_gtfs.zip -d san_joaquins_gtfs
 
           # Run Pfaedle on San Joaquins network
-          pfaedle -x pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail,bus,ferry --write-colors
+          pfaedle -x pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail --write-colors --drop-shapes
 
           # Zip the processed San Joaquins GTFS
           zip -r -9 san_joaquins_gtfs_pfaedle.zip san_joaquins_gtfs/
