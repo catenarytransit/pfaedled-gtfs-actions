@@ -1,4 +1,4 @@
-name: Update Pfaedle files
+name: Update Pfaedle files Swiss
 
 on:
    workflow_call:
