@@ -2,12 +2,10 @@ name: Déclencheur de mise à jour manuelle
 
 on:
   workflow_dispatch:
-    inputs:
+    secrets:
       GRAND_LYON_USERNAME:
-        description: 'Username for Grand Lyon data download'
         required: true
       GRAND_LYON_PASSWORD:
-        description: 'Password for Grand Lyon data download'
         required: true
         
 permissions:
