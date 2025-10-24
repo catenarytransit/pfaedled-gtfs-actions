@@ -80,9 +80,9 @@ jobs:
           LYON_USER: ${{ secrets.GRAND_LYON_USERNAME }}
           LYON_PASS: ${{ secrets.GRAND_LYON_PASSWORD }}
         run: |
-          wget --user="$LYON_USER" --password="$LYON_PASS" \
-            "https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP" \
-            -O GTFS_TCL.ZIP
+          curl -LfsS -u "$LYON_USER:$LYON_PASS" \
+            -o GTFS_TCL.ZIP \
+            "https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP"
 
       - name: Extract Lyon
         run: unzip GTFS_TCL.ZIP -d gtfs_tcl
