@@ -69,3 +69,27 @@ jobs:
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != ''
+
+      - name: Download Lyon
+        run: wget https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP
+
+      - name: Extract Lyon
+        run: unzip GTFS_TCL.ZIP -d gtfs_tcl
+
+      - name: Run Pfaedle Lyon
+        run: ./pfaedle/build/pfaedle -x france-latest.osm gtfs_tcl -F --inplace
+
+      - name: Zip Lyon
+        run: zip -9 -r gtfs_tcl_pfaedle.zip gtfs_tcl/*
+
+      - name: Upload Lyon results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: gtfs_tcl_pfaedle.zip # Replace with the actual path to your file
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != ''
