@@ -3,6 +3,7 @@ name: Update Scheduled
 on:
   schedule:
     - cron: '0 0,6,12,18 * * *'
+    
 
 permissions:
   contents: write
@@ -25,6 +26,9 @@ jobs:
     uses: ./.github/workflows/sncfupdate.yml
   francais:
     uses: ./.github/workflows/france_services_locaux.yaml
+    secrets:
+      GRAND_LYON_USERNAME: ${{ inputs.GRAND_LYON_USERNAME }}
+      GRAND_LYON_PASSWORD: ${{ inputs.GRAND_LYON_PASSWORD }}
   pc:
     uses: ./.github/workflows/pc_update.yml
   norway:
