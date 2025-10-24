@@ -1,13 +1,18 @@
-name: Update Pfaedle file Lille
+name: Update Pfaedle GTFS (Lille & Lyon)
 
 on:
   workflow_call:
+    secrets:
+      GRAND_LYON_USERNAME:
+        required: true
+      GRAND_LYON_PASSWORD:
+        required: true
 
 jobs:
   upload-release-asset:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Required for gh release upload
       packages: write
 
     steps:
@@ -62,16 +67,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: lille_pfaedle.zip # Replace with the actual path to your file
+          ASSET_PATH: lille_pfaedle.zip 
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
+          echo "Uploading asset: $ASSET_PATH to release $RELEASE_TAG"
+          gh release upload $RELEASE_TAG "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != ''
 
       - name: Download Lyon
-        run: wget https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP
+        env:
+          LYON_USER: ${{ secrets.GRAND_LYON_USERNAME }}
+          LYON_PASS: ${{ secrets.GRAND_LYON_PASSWORD }}
+        run: |
+          wget --user="$LYON_USER" --password="$LYON_PASS" \
+            "https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP" \
+            -O GTFS_TCL.ZIP
 
       - name: Extract Lyon
         run: unzip GTFS_TCL.ZIP -d gtfs_tcl
@@ -86,10 +97,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: gtfs_tcl_pfaedle.zip # Replace with the actual path to your file
+          ASSET_PATH: gtfs_tcl_pfaedle.zip
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
+          echo "Uploading asset: $ASSET_PATH to release $RELEASE_TAG"
+          gh release upload $RELEASE_TAG "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != ''
+
