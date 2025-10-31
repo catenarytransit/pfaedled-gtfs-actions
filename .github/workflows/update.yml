@@ -84,7 +84,7 @@ jobs:
       - name: Run pfaedle SNCB
         run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncb_gtfs -F --inplace  --write-colors --drop-shapes true
 
-      - name: Zip SNCF pfaedle result
+      - name: Zip SNCB pfaedle result
         run: zip -9 -r sncb_gtfs_pfaedle.zip sncb_gtfs/*
 
       - name: Upload SNCB result

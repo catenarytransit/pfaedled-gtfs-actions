@@ -2,11 +2,11 @@ name: Update Pfaedle GTFS (Lille & Lyon)
 
 on:
   workflow_call:
-    secrets:
-      GRAND_LYON_USERNAME:
-        required: true
-      GRAND_LYON_PASSWORD:
-        required: true
+#    secrets:
+#      GRAND_LYON_USERNAME:
+#        required: true
+#      GRAND_LYON_PASSWORD:
+#        required: true
 
 jobs:
   upload-release-asset:
@@ -74,34 +74,3 @@ jobs:
           gh release upload $RELEASE_TAG "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != ''
-
-      - name: Download Lyon
-        env:
-          LYON_USER: ${{ secrets.GRAND_LYON_USERNAME }}
-          LYON_PASS: ${{ secrets.GRAND_LYON_PASSWORD }}
-        run: |
-          curl -LfsS -u "$LYON_USER:$LYON_PASS" \
-            -o GTFS_TCL.ZIP \
-            "https://download.data.grandlyon.com/files/rdata/tcl_sytral.tcltheorique/GTFS_TCL.ZIP"
-
-      - name: Extract Lyon
-        run: unzip GTFS_TCL.ZIP -d gtfs_tcl
-
-      - name: Run Pfaedle Lyon
-        run: ./pfaedle/build/pfaedle -x france-latest.osm gtfs_tcl -F --inplace
-
-      - name: Zip Lyon
-        run: zip -9 -r gtfs_tcl_pfaedle.zip gtfs_tcl/*
-
-      - name: Upload Lyon results
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: gtfs_tcl_pfaedle.zip
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH to release $RELEASE_TAG"
-          gh release upload $RELEASE_TAG "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != ''
-
