@@ -33,8 +33,8 @@ jobs:
     uses: ./.github/workflows/pc_update.yml
   norway:
     uses: ./.github/workflows/norway.yml
-  luxembourg:
-    uses: ./.github/workflows/luxembourg_update.yml
+ # luxembourg:
+ #   uses: ./.github/workflows/luxembourg_update.yml
   san-joaquins:
     uses: ./.github/workflows/san-joaquins.yml
 #  de-call-update:
