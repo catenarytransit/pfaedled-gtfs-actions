@@ -25,6 +25,7 @@ osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
 osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=germany-latest.osm
 wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/fahrplaene_gesamtdeutschland_gtfs_raw.zip -O de_gtfs.zip
 
+# -f flag ensures this doesn't error if the directory doesn't exist
 rm -rf de_gtfs
 
 unzip de_gtfs.zip -d de_gtfs
@@ -33,6 +34,7 @@ unzip de_gtfs.zip -d de_gtfs
 
 sed -i 's/\"\",\"Europe\/Berlin\"/\"https:\/\/catenarymaps.org\",\"Europe\/Berlin\"/g' de_gtfs/agency.txt
 
+# -f flag ensures this doesn't error if the directory doesn't exist
 rm -rf de_gtfs_tidy/
 
 gtfstidy --fix --drop-shapes -o de_gtfs_tidy/ de_gtfs/
@@ -47,7 +49,8 @@ gtfstidy --fix -s -o de_gtfs_tidy/ de_gtfs/
 mv de_gtfs_tidy/* de_gtfs/
 ./shape-squash/target/release/shape-squash de_gtfs/shapes.txt
 
-rm de_gtfs_pfaedle.zip
+# Added -f flag here to prevent script exit if file does not exist
+rm -f de_gtfs_pfaedle.zip
 zip de_gtfs_pfaedle.zip de_gtfs_tidy/*
 
 gh release upload latest de_gtfs_pfaedle.zip --clobber -R https://github.com/catenarytransit/pfaedled-gtfs-actions/
