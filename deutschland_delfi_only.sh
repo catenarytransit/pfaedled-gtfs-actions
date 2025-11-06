@@ -45,13 +45,13 @@ pfaedle -x germany-latest.osm de_gtfs -F --inplace --mots bus,trolley-bus,trolle
 
 pfaedle -x railonly-europe-latest.osm de_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
 
-##gtfstidy --fix -s -o de_gtfs_tidy/ de_gtfs/
-##mv de_gtfs_tidy/* de_gtfs/
+#gtfstidy --fix -s -o de_gtfs_tidy/ de_gtfs/
+#mv de_gtfs_tidy/* de_gtfs/
 ./shape-squash/target/release/shape-squash de_gtfs/shapes.txt
 
 # Added -f flag here to prevent script exit if file does not exist
 rm -f de_gtfs_pfaedle.zip
-zip de_gtfs_pfaedle.zip de_gtfs_tidy/*
+zip de_gtfs_pfaedle.zip de_gtfs/*
 
 gh release upload latest de_gtfs_pfaedle.zip --clobber -R https://github.com/catenarytransit/pfaedled-gtfs-actions/
 
