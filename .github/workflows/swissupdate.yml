@@ -110,7 +110,7 @@ jobs:
            echo 'zipping...'
 
            # Zip swiss gtfs
-           zip -r -9 swiss_gtfs_pfaedle.zip swiss_gtfs/*
+           (cd swiss_gtfs && zip -r -9 ../swiss_gtfs_pfaedle.zip .)
          id: run_pfaedle_zip
 
        - name: Upload Assets Swiss GTFS
