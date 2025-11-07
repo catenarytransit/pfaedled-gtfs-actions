@@ -105,6 +105,8 @@ jobs:
 
            echo 'gtfs tidy running'
 
+           head -n -1 swiss_gtfs/shapes.txt > swiss_gtfs/shapes.txt.tmp; mv swiss_gtfs/shapes.txt.tmp swiss_gtfs/shapes.txt
+
            #gtfstidy --fix --drop-errs -o swiss_gtfs_tidy/ swiss_gtfs/
 
            echo 'zipping...'
