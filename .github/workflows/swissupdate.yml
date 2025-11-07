@@ -105,12 +105,12 @@ jobs:
 
            echo 'gtfs tidy running'
 
-           gtfstidy --fix --drop-errs -o swiss_gtfs_tidy/ swiss_gtfs/
+           #gtfstidy --fix --drop-errs -o swiss_gtfs_tidy/ swiss_gtfs/
 
            echo 'zipping...'
 
            # Zip swiss gtfs
-           zip -r -9 swiss_gtfs_pfaedle.zip swiss_gtfs_tidy/*
+           zip -r -9 swiss_gtfs_pfaedle.zip swiss_gtfs/*
          id: run_pfaedle_zip
 
        - name: Upload Assets Swiss GTFS
