@@ -90,6 +90,7 @@ jobs:
          run: |
            # Unzip Swiss GTFS
            unzip swiss_gtfs.zip -d swiss_gtfs
+           rm swiss_gtfs.zip
 
            cp swiss_gtfs/stop_times.txt stop_times_backup.txt
 
