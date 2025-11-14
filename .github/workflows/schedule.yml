@@ -34,5 +34,7 @@ jobs:
  #   uses: ./.github/workflows/luxembourg_update.yml
   san-joaquins:
     uses: ./.github/workflows/san-joaquins.yml
+  nah:
+    uses: ./.github/workflows/nah_pfaedle.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
