@@ -1,0 +1,130 @@
+name: Update Pfaedle files Schleswig-Holstein
+
+on:
+   workflow_call:
+
+jobs:
+   upload-release-asset:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: write
+       packages: write
+
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
+
+       - name: Install Go
+         uses: actions/setup-go@v5
+         with:
+          go-version: '^1.13.1'
+
+       - name: Install GTFS tidy
+         run: |
+          go install github.com/patrickbr/gtfstidy@latest
+          gtfstidy --help
+
+       - name: Download unzip and zip
+         run: sudo apt install unzip zip
+
+       - name: Install OSM tools
+         run: sudo apt install osmium-tool osmctools
+
+       - name: Build Pfaedle
+         run: |
+           if ! command -v pfaedle &> /dev/null; then
+             git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+             cd pfaedle
+             mkdir build && cd build
+             cmake ..
+             make -j
+             sudo make install
+             cd ..
+           else
+             echo "Pfaedle is already installed."
+           fi
+
+       - name: Download osm files
+         run: |
+           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf -O railonly-europe-latest.osm.pbf
+           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf -O pfaedle-filtered-germany-latest.osm.pbf
+
+       - name: Convert OSM files
+         run: |
+           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
+           osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=pfaedle-filtered-germany-latest.osm
+
+       - name: Download SH GTFS
+         id: download_sh_gtfs
+         run: |
+           wget https://opendata.schleswig-holstein.de/dataset/5e0652d8-7f59-42fc-92ab-a6358f800e1d/resource/f00ca713-8816-4141-a8ac-948d69f917b4/download/fahrplandaten -O sh_gtfs.zip
+           echo "SH_GTFS_FILE=sh_gtfs.zip" >> $GITHUB_OUTPUT
+
+       - name: Calculate SH GTFS MD5 Hash
+         id: calculate_sh_gtfs_md5
+         run: |
+           filepath="${{ steps.download_sh_gtfs.outputs.SH_GTFS_FILE }}"
+           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+           echo "SH_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+           echo "SH_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+           echo "$md5_hash" > "$filepath.md5"
+
+       - name: Download Existing SH GTFS MD5 Hash
+         id: download_existing_sh_gtfs_md5
+         run: |
+           ASSET_NAME="${{ steps.download_sh_gtfs.outputs.SH_GTFS_FILE }}"
+           MD5_ASSET_NAME="${ASSET_NAME}.md5"
+           RELEASE_TAG="latest"
+           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+           if wget --spider --quiet "$RELEASE_URL"; then
+             echo "SH_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+             wget --quiet -O existing_sh_gtfs_md5.txt "$RELEASE_URL"
+             EXISTING_SH_GTFS_MD5=$(cat existing_sh_gtfs_md5.txt)
+             echo "EXISTING_SH_GTFS_MD5=$EXISTING_SH_GTFS_MD5" >> $GITHUB_OUTPUT
+           else
+             echo "SH_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+           fi
+
+       - name: Run Pfaedle and Zip (Conditional)
+         if: steps.download_existing_sh_gtfs_md5.outputs.SH_GTFS_MD5_EXISTS == 'false' || steps.calculate_sh_gtfs_md5.outputs.SH_GTFS_MD5 != steps.download_existing_sh_gtfs_md5.outputs.EXISTING_SH_GTFS_MD5
+         run: |
+           unzip sh_gtfs.zip -d sh_gtfs
+
+           # Run Pfaedle SH Bus network
+           pfaedle -x pfaedle-filtered-germany-latest.osm sh_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+
+           # Run Pfaedle SH Rail network
+           pfaedle -x railonly-europe-latest.osm sh_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+
+           # Zip sh gtfs
+           (cd sh_gtfs && zip -r -9 ../sh_gtfs_pfaedle.zip .)
+         id: run_pfaedle_zip
+
+       - name: Upload Assets SH GTFS
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_TOKEN: ${{ github.token }}
+           ASSET_PATH: sh_gtfs_pfaedle.zip
+           MD5_ASSET_PATH: ${{ steps.calculate_sh_gtfs_md5.outputs.SH_GTFS_MD5_FILE }}
+           RELEASE_TAG: latest
+         run: |
+           NEW_MD5="${{ steps.calculate_sh_gtfs_md5.outputs.SH_GTFS_MD5 }}"
+           MD5_EXISTS="${{ steps.download_existing_sh_gtfs_md5.outputs.SH_GTFS_MD5_EXISTS }}"
+           EXISTING_MD5="${{ steps.download_existing_sh_gtfs_md5.outputs.EXISTING_SH_GTFS_MD5 }}"
+
+           if [[ "$MD5_EXISTS" == "false" ]]; then
+             echo "No existing MD5 found for SH GTFS. Uploading both file and MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+             echo "Existing MD5 for SH GTFS is different. Uploading both file and new MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           else
+             echo "Existing MD5 for SH GTFS matches the new MD5. Skipping upload."
+           fi
+         shell: bash
