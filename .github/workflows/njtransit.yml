@@ -1,0 +1,147 @@
+name: Update Pfaedle files NJ
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.13.1'
+
+      - name: Install GTFS tidy
+        run: |
+          go install github.com/patrickbr/gtfstidy@latest
+          gtfstidy --help
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm file
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-us-northeast-latest.osm.pbf
+
+      - name: Convert OSM file
+        run: |
+          osmconvert pfaedle-filtered-us-northeast-latest.osm.pbf -o=us-northeast.osm
+
+      - name: Download NJ GTFS
+        id: download_nj_gtfs
+        run: |
+          wget https://testpcsdata.njtransit.com/api/GTFS/getGTFS -O nj_gtfs.zip
+          echo "NJ_GTFS_FILE=nj_gtfs.zip" >> $GITHUB_OUTPUT
+
+      - name: Calculate NJ GTFS MD5 Hash
+        id: calculate_nj_gtfs_md5
+        run: |
+          filepath="${{ steps.download_nj_gtfs.outputs.NJ_GTFS_FILE }}"
+          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+          echo "NJ_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+          echo "NJ_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+          echo "$md5_hash" > "$filepath.md5"
+
+      - name: Download Existing NJ GTFS MD5 Hash
+        id: download_existing_nj_gtfs_md5
+        run: |
+          ASSET_NAME="${{ steps.download_nj_gtfs.outputs.NJ_GTFS_FILE }}"
+          MD5_ASSET_NAME="${ASSET_NAME}.md5"
+          RELEASE_TAG="latest"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+          if wget --spider --quiet "$RELEASE_URL"; then
+            echo "NJ_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+            wget --quiet -O existing_nj_gtfs_md5.txt "$RELEASE_URL"
+            EXISTING_NJ_GTFS_MD5=$(cat existing_nj_gtfs_md5.txt)
+            echo "EXISTING_NJ_GTFS_MD5=$EXISTING_NJ_GTFS_MD5" >> $GITHUB_OUTPUT
+          else
+            echo "NJ_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Pfaedle and Zip (Conditional)
+        if: steps.download_existing_nj_gtfs_md5.outputs.NJ_GTFS_MD5_EXISTS == 'false' || steps.calculate_nj_gtfs_md5.outputs.NJ_GTFS_MD5 != steps.download_existing_nj_gtfs_md5.outputs.EXISTING_NJ_GTFS_MD5
+        id: run_pfaedle_zip
+        run: |
+          # Unzip NJ GTFS
+          unzip nj_gtfs.zip -d nj_gtfs
+          rm nj_gtfs.zip
+
+          cp nj_gtfs/stop_times.txt stop_times_backup.txt
+
+          # Run Pfaedle NJ network
+          # We use the combined filter OSM and combine all MOTs into one run
+          pfaedle -x us-northeast.osm nj_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,rail,metro,subway,tram,streetcar --write-colors
+
+          echo 'move stop times back from the backup'
+          mv stop_times_backup.txt nj_gtfs/stop_times.txt
+
+          echo 'gtfs tidy running'
+          
+          # This command (head) removes the last line from shapes.txt
+          head -n -1 nj_gtfs/shapes.txt > nj_gtfs/shapes.txt.tmp; mv nj_gtfs/shapes.txt.tmp nj_gtfs/shapes.txt
+
+          # gtfstidy --fix --drop-errs -o nj_gtfs_tidy/ nj_gtfs/
+
+          echo 'zipping...'
+
+          # Zip nj gtfs
+          (cd nj_gtfs && zip -r -9 ../nj_gtfs_pfaedle.zip .)
+
+      - name: Upload Assets NJ GTFS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: nj_gtfs_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_nj_gtfs_md5.outputs.NJ_GTFS_MD5_FILE }}
+          RELEASE_TAG: latest
+        run: |
+          NEW_MD5="${{ steps.calculate_nj_gtfs_md5.outputs.NJ_GTFS_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_nj_gtfs_md5.outputs.NJ_GTFS_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_nj_gtfs_md5.outputs.EXISTING_NJ_GTFS_MD5 }}"
+          PFAEDLE_STEP_SUCCESS="${{ steps.run_pfaedle_zip.outcome == 'success' }}"
+
+          if [[ "$MD5_EXISTS" == "false" ]]; then
+            echo "No existing MD5 found for NJ GTFS. Uploading both file and MD5."
+            if [[ -f "$ASSET_PATH" && "$PFAEDLE_STEP_SUCCESS" == "true" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip step was skipped or failed, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+            echo "Existing MD5 for NJ GTFS is different. Uploading both file and new MD5."
+            if [[ -f "$ASSET_PATH" && "$PFAEDLE_STEP_SUCCESS" == "true" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip step was skipped or failed, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          else
+            echo "Existing MD5 for NJ GTFS matches the new MD5. Skipping upload."
+          fi
+        shell: bash

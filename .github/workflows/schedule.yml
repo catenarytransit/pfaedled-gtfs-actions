@@ -36,5 +36,7 @@ jobs:
     uses: ./.github/workflows/san-joaquins.yml
   nah:
     uses: ./.github/workflows/nah_pfaedle.yml
+  njtransit:
+    uses: ./.github/workflows/njtransit.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
