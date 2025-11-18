@@ -95,7 +95,7 @@ jobs:
 
           # Run Pfaedle NJ network
           # We use the combined filter OSM and combine all MOTs into one run
-          pfaedle -x us-northeast.osm nj_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,rail,metro,subway,tram,streetcar --write-colors
+          pfaedle -x us-northeast.osm nj_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
 
           echo 'move stop times back from the backup'
           mv stop_times_backup.txt nj_gtfs/stop_times.txt
