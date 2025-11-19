@@ -35,6 +35,7 @@ jobs:
           if ! command -v pfaedle &> /dev/null; then
             git clone --recurse-submodules https://github.com/catenarytransit/pfaedle
             cd pfaedle
+            git submodule update --remote --recursive
             mkdir build && cd build
             cmake ..
             make -j
