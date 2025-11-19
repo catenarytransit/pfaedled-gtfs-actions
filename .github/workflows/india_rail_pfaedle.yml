@@ -33,7 +33,7 @@ jobs:
       - name: Build Pfaedle
         run: |
           if ! command -v pfaedle &> /dev/null; then
-            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            git clone --recurse-submodules https://github.com/catenarytransit/pfaedle
             cd pfaedle
             mkdir build && cd build
             cmake ..
