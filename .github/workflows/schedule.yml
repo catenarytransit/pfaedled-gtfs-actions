@@ -38,5 +38,7 @@ jobs:
     uses: ./.github/workflows/nah_pfaedle.yml
   njtransit:
     uses: ./.github/workflows/njtransit.yml
+  peatus:
+    uses: ./.github/workflows/peatus.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml

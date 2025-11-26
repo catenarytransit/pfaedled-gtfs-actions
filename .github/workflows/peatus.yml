@@ -1,0 +1,74 @@
+name: Update Pfaedle file Estonia
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download unzip and zip
+        run: sudo apt install unzip zip -y
+
+      - name: Install OSM tools
+        run: sudo apt install osmium-tool osmctools -y
+
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
+
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
+      - name: Download osm files
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-estonia-latest.osm.pbf -O estonia-latest.osm.pbf
+          
+      - name: Convert OSM files
+        run: |
+          osmconvert estonia-latest.osm.pbf -o=estonia-latest.osm
+
+      - name: Download Estonia GTFS
+        run: wget https://peatus.ee/gtfs/gtfs.zip -O peatus_gtfs.zip
+
+      - name: Unzip of Estonia gtfs
+        run: |
+          mkdir peatus_gtfs
+          unzip peatus_gtfs.zip -d peatus_gtfs
+
+      - name: Run Estonia pfaedle
+        run: |
+          pfaedle -x estonia-latest.osm peatus_gtfs --write-colors
+
+      - name: Zip the resulting GTFS Estonia
+        run: zip -r peatus-gtfs-pfaedle.zip gtfs-out
+
+      - name: Upload Asset Estonia
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: peatus-gtfs-pfaedle.zip # Replace with the actual path to your file
+          ASSET_NAME: peatus-gtfs-pfaedle.zip      # Replace with the desired name of the asset
+          RELEASE_TAG: latest
+        run: |
+          echo "Uploading asset: $ASSET_PATH as $ASSET_NAME to release latest"
+          gh release upload latest "$ASSET_PATH" --clobber
+        shell: bash
+        if: env.ASSET_PATH != '' && env.ASSET_NAME != ''
