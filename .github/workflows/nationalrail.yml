@@ -1,0 +1,49 @@
+name: National Rail UK GTFS Update
+
+on:
+  schedule:
+    - cron: '15 3 * * 1'   # 03:15 UTC, weekly Monday (edit as desired)
+  workflow_dispatch:
+
+jobs:
+  update-nationalrailuk:
+    runs-on: ubuntu-latest
+    env:
+      NR_USERNAME: ${{ secrets.NR_USERNAME }}
+      NR_PASSWORD: ${{ secrets.NR_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip gh
+
+      - name: Checkout nationalrail-gtfs
+        uses: actions/checkout@v4
+        with:
+          repository: catenarytransit/nationalrail-gtfs
+          path: nationalrail-gtfs
+
+      - name: Build nationalrail-gtfs
+        run: |
+          cd nationalrail-gtfs
+          cargo build --release
+
+      - name: Run nationalrail-gtfs
+        run: |
+          cd nationalrail-gtfs
+          NR_USERNAME="$NR_USERNAME" NR_PASSWORD="$NR_PASSWORD" ./target/release/nationalrail-gtfs
+
+      - name: Zip output
+        run: |
+          sh zip.sh
+
+      - name: Upload to latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload $(gh release list --limit 1 | head -1 | awk '{print $1}') nationalrailuk.zip --clobber
