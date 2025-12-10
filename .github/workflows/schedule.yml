@@ -42,5 +42,8 @@ jobs:
     uses: ./.github/workflows/peatus.yml
   uknationalrail:
     uses: ./.github/workflows/nationalrail.yml
+    secrets:
+      NR_USERNAME: ${{ secrets.NR_USERNAME }}
+      NR_PASSWORD: ${{ secrets.NR_PASSWORD }}
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
