@@ -10,3 +10,6 @@ permissions:
 jobs:
   call-update:
     uses: ./.github/workflows/nationalrail.yml
+    secrets:
+      NR_USERNAME: ${{ secrets.NR_USERNAME }}
+      NR_PASSWORD: ${{ secrets.NR_PASSWORD }}
