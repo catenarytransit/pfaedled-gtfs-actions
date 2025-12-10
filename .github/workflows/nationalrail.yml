@@ -44,4 +44,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload $(gh release list --limit 1 | head -1 | awk '{print $1}') nationalrailuk.zip --clobber
+          gh release upload latest nationalrailuk.zip --clobber
