@@ -2,6 +2,11 @@ name: National Rail UK GTFS Update
 
 on:
   workflow_call:
+    secrets:
+      NR_USERNAME:
+        required: true
+      NR_PASSWORD:
+        required: true
 
 jobs:
   update-nationalrailuk:
