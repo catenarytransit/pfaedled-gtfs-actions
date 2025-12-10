@@ -52,4 +52,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd nationalrail-gtfs
-          gh release upload latest nationalrailuk.zip --clobber
+          gh release upload latest nationalrailuk.zip  --repo catenarytransit/pfaedled-gtfs-actions  --clobber
