@@ -1,7 +1,7 @@
 name: Manual Update Trigger National Rail UK
 
 on:
-  workflow_dispatch:
+  workflow_call:
     
 permissions:
   contents: write
