@@ -40,5 +40,7 @@ jobs:
     uses: ./.github/workflows/njtransit.yml
   peatus:
     uses: ./.github/workflows/peatus.yml
+  uknationalrail:
+    uses: ./.github/workflows/nationalrail.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
