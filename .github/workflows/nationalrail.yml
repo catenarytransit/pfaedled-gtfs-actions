@@ -43,10 +43,12 @@ jobs:
 
       - name: Zip output
         run: |
-          sh zip.sh
+          cd nationalrail-gtfs
+          sh ./zip.sh
 
       - name: Upload to latest release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cd nationalrail-gtfs
           gh release upload latest nationalrailuk.zip --clobber
