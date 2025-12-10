@@ -1,8 +1,6 @@
 name: National Rail UK GTFS Update
 
 on:
-  schedule:
-    - cron: '15 3 * * 1'   # 03:15 UTC, weekly Monday (edit as desired)
   workflow_dispatch:
 
 jobs:
