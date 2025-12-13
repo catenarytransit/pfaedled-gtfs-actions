@@ -57,7 +57,7 @@ jobs:
        - name: Download SH GTFS
          id: download_sh_gtfs
          run: |
-           wget https://opendata.schleswig-holstein.de/dataset/5e0652d8-7f59-42fc-92ab-a6358f800e1d/resource/f00ca713-8816-4141-a8ac-948d69f917b4/download/fahrplandaten -O sh_gtfs.zip
+           wget https://opendata.schleswig-holstein.de/dataset/5e0652d8-7f59-42fc-92ab-a6358f800e1d/resource/30bb697f-b7ae-4af5-8e7a-8862e2cc9d04/download/fahrplandaten -O sh_gtfs.zip
            echo "SH_GTFS_FILE=sh_gtfs.zip" >> $GITHUB_OUTPUT
 
        - name: Calculate SH GTFS MD5 Hash
