@@ -43,66 +43,66 @@ jobs:
           osmconvert pfaedle-filtered-california-latest.osm.pbf -o=pfaedle-filtered-california-latest.osm
 
       - name: Download San Joaquins GTFS
-        id: download_san_joaquins_gtfs
+        id: download_gold_runner_gtfs
         run: |
-          wget https://d34tiw64n5z4oh.cloudfront.net/wp-content/uploads/SJJPA_03182025-1.zip -O san_joaquins_gtfs.zip
-          echo "SAN_JOAQUINS_GTFS_FILE=san_joaquins_gtfs.zip" >> $GITHUB_OUTPUT
+          wget https://d34tiw64n5z4oh.cloudfront.net/wp-content/uploads/GRGTFS.zip -O gold_runner_gtfs.zip
+          echo "gold_runner_gtfs_FILE=gold_runner_gtfs.zip" >> $GITHUB_OUTPUT
 
       - name: Calculate San Joaquins GTFS MD5 Hash
-        id: calculate_san_joaquins_gtfs_md5
+        id: calculate_gold_runner_gtfs_md5
         run: |
-          filepath="${{ steps.download_san_joaquins_gtfs.outputs.SAN_JOAQUINS_GTFS_FILE }}"
+          filepath="${{ steps.download_gold_runner_gtfs.outputs.gold_runner_gtfs_FILE }}"
           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
-          echo "SAN_JOAQUINS_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
-          echo "SAN_JOAQUINS_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+          echo "gold_runner_gtfs_MD5=$md5_hash" >> $GITHUB_OUTPUT
+          echo "gold_runner_gtfs_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
           echo "$md5_hash" > "$filepath.md5"
 
       - name: Download Existing San Joaquins GTFS MD5 Hash
-        id: download_existing_san_joaquins_gtfs_md5
+        id: download_existing_gold_runner_gtfs_md5
         run: |
-          ASSET_NAME="${{ steps.download_san_joaquins_gtfs.outputs.SAN_JOAQUINS_GTFS_FILE }}"
+          ASSET_NAME="${{ steps.download_gold_runner_gtfs.outputs.gold_runner_gtfs_FILE }}"
           MD5_ASSET_NAME="${ASSET_NAME}.md5"
           RELEASE_TAG="latest"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
           if wget --spider --quiet "$RELEASE_URL"; then
-            echo "SAN_JOAQUINS_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
-            wget --quiet -O existing_san_joaquins_gtfs_md5.txt "$RELEASE_URL"
-            EXISTING_SAN_JOAQUINS_GTFS_MD5=$(cat existing_san_joaquins_gtfs_md5.txt)
-            echo "EXISTING_SAN_JOAQUINS_GTFS_MD5=$EXISTING_SAN_JOAQUINS_GTFS_MD5" >> $GITHUB_OUTPUT
+            echo "gold_runner_gtfs_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+            wget --quiet -O existing_gold_runner_gtfs_md5.txt "$RELEASE_URL"
+            EXISTING_gold_runner_gtfs_MD5=$(cat existing_gold_runner_gtfs_md5.txt)
+            echo "EXISTING_gold_runner_gtfs_MD5=$EXISTING_gold_runner_gtfs_MD5" >> $GITHUB_OUTPUT
           else
-            echo "SAN_JOAQUINS_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+            echo "gold_runner_gtfs_MD5_EXISTS=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Run Pfaedle and Zip (Conditional)
-        if: steps.download_existing_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5_EXISTS == 'false' || steps.calculate_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5 != steps.download_existing_san_joaquins_gtfs_md5.outputs.EXISTING_SAN_JOAQUINS_GTFS_MD5
+        if: steps.download_existing_gold_runner_gtfs_md5.outputs.gold_runner_gtfs_MD5_EXISTS == 'false' || steps.calculate_gold_runner_gtfs_md5.outputs.gold_runner_gtfs_MD5 != steps.download_existing_gold_runner_gtfs_md5.outputs.EXISTING_gold_runner_gtfs_MD5
         id: run_pfaedle_zip
         run: |
           # Unzip San Joaquins GTFS
-          unzip san_joaquins_gtfs.zip -d san_joaquins_gtfs
+          unzip gold_runner_gtfs.zip -d gold_runner_gtfs
 
           # Delete empty stops.txt lines
-          sed -i '/^[[:space:]]*$/d' san_joaquins_gtfs/stops.txt
-          sed -i '/^[[:space:]]*$/d' san_joaquins_gtfs/stop_times.txt
-          sed -i '/^[[:space:]]*$/d' san_joaquins_gtfs/trips.txt
+          sed -i '/^[[:space:]]*$/d' gold_runner_gtfs/stops.txt
+          sed -i '/^[[:space:]]*$/d' gold_runner_gtfs/stop_times.txt
+          sed -i '/^[[:space:]]*$/d' gold_runner_gtfs/trips.txt
 
           # Run Pfaedle on San Joaquins network
-          pfaedle -x pfaedle-filtered-california-latest.osm san_joaquins_gtfs -F --inplace --mots rail --write-colors --drop-shapes true
+          pfaedle -x pfaedle-filtered-california-latest.osm gold_runner_gtfs -F --inplace --mots rail --write-colors --drop-shapes true
 
           # Zip the processed San Joaquins GTFS
-          zip -r -9 san_joaquins_gtfs_pfaedle.zip san_joaquins_gtfs/
+          zip -r -9 gold_runner_gtfs_pfaedle.zip gold_runner_gtfs/
 
       - name: Upload San Joaquins GTFS Assets
         if: steps.run_pfaedle_zip.outcome == 'success'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: san_joaquins_gtfs_pfaedle.zip
-          MD5_ASSET_PATH: ${{ steps.calculate_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5_FILE }}
+          ASSET_PATH: gold_runner_gtfs_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_gold_runner_gtfs_md5.outputs.gold_runner_gtfs_MD5_FILE }}
           RELEASE_TAG: latest
         run: |
-          NEW_MD5="${{ steps.calculate_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5 }}"
-          MD5_EXISTS="${{ steps.download_existing_san_joaquins_gtfs_md5.outputs.SAN_JOAQUINS_GTFS_MD5_EXISTS }}"
-          EXISTING_MD5="${{ steps.download_existing_san_joaquins_gtfs_md5.outputs.EXISTING_SAN_JOAQUINS_GTFS_MD5 }}"
+          NEW_MD5="${{ steps.calculate_gold_runner_gtfs_md5.outputs.gold_runner_gtfs_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_gold_runner_gtfs_md5.outputs.gold_runner_gtfs_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_gold_runner_gtfs_md5.outputs.EXISTING_gold_runner_gtfs_MD5 }}"
           
           if [[ "$MD5_EXISTS" == "false" ]] || [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
             if [[ "$MD5_EXISTS" == "false" ]]; then
