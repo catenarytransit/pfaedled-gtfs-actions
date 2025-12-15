@@ -57,7 +57,7 @@ jobs:
        - name: Download Swiss GTFS
          id: download_swiss_gtfs
          run: |
-           wget https://data.opentransportdata.swiss/en/dataset/timetable-2025-gtfs2020/permalink -O swiss_gtfs.zip
+           wget https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink -O swiss_gtfs.zip
            echo "SWISS_GTFS_FILE=swiss_gtfs.zip" >> $GITHUB_OUTPUT
 
        - name: Calculate Swiss GTFS MD5 Hash
