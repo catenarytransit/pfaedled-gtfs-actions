@@ -59,7 +59,7 @@ jobs:
         run: ./gtfs-fixer/target/release/gtfs-fixer gb_bus_gtfs/
 
       - name: Run Pfaedle GB Bus and Metros network
-        run: pfaedle -x great-britain-latest.osm.pbf gb_bus_gtfs -F --inplace --write-colors --drop-shapes true
+        run: pfaedle -x pfaedle-filtered-great-britain-latest.osm.pbf gb_bus_gtfs -F --inplace --write-colors --drop-shapes true
 
       - name: Zip GB gtfs
         run:  zip -r -9 gb_bus_gtfs_pfaedle.zip gb_bus_gtfs/*
