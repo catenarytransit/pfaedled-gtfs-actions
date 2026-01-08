@@ -48,10 +48,6 @@ jobs:
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-great-britain-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert pfaedle-filtered-great-britain-latest.osm.pbf -o=great-britain-latest.osm
 
       - name: Download GB GTFS
         run: wget https://data.bus-data.dft.gov.uk/timetable/download/gtfs-file/all/ -O gb_bus_gtfs.zip
@@ -63,7 +59,7 @@ jobs:
         run: ./gtfs-fixer/target/release/gtfs-fixer gb_bus_gtfs/
 
       - name: Run Pfaedle GB Bus and Metros network
-        run: pfaedle -x great-britain-latest.osm gb_bus_gtfs -F --inplace --write-colors --drop-shapes true
+        run: pfaedle -x great-britain-latest.osm.pbf gb_bus_gtfs -F --inplace --write-colors --drop-shapes true
 
       - name: Zip GB gtfs
         run:  zip -r -9 gb_bus_gtfs_pfaedle.zip gb_bus_gtfs/*
