@@ -48,11 +48,6 @@ jobs:
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-sweden-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert pfaedle-filtered-sweden-latest.osm.pbf -o=sweden-latest.osm
 
       - name: Download Se GTFS
         run: wget https://github.com/catenarytransit/pfaedled-gtfs-actions/releases/download/latest/sweden.zip
@@ -69,10 +64,10 @@ jobs:
           mv sweden_cleaned sweden
 
       - name: Run Pfaedle Se Bus network
-        run: pfaedle -x sweden-latest.osm sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors --drop-shapes true
+        run: pfaedle -x sweden-latest.osm.pbf sweden -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors --drop-shapes true
 
       - name: Run Pfaedle Se Rail network
-        run: pfaedle -x railonly-europe-latest.osm sweden -F --inplace --mots rail --write-colors  --drop-shapes true
+        run: pfaedle -x railonly-europe-latest.osm.pbf sweden -F --inplace --mots rail --write-colors  --drop-shapes true
 
       - name: Zip se gtfs
         run:  zip -r -9 sweden_pfaedle.zip sweden/*
