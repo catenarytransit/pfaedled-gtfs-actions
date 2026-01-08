@@ -42,11 +42,6 @@ jobs:
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-france-latest.osm.pbf
 
-      - name: Convert OSM files
-        run: |
-          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert pfaedle-filtered-france-latest.osm.pbf -o=pfaedle-filtered-france-latest.osm
-
       - name: Download SNCF files
         run: |
           wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-opendata-sncf-gtfs.zip 
@@ -57,8 +52,8 @@ jobs:
 
       - name: Run pfaedle SNCF
         run: |
-          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncf  -F --inplace --mots rail
-          ./pfaedle/build/pfaedle -x pfaedle-filtered-france-latest.osm sncf  -F --inplace --mots bus
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf sncf  -F --inplace --mots rail
+          ./pfaedle/build/pfaedle -x pfaedle-filtered-france-latest.osm.pbf sncf  -F --inplace --mots bus
 
       - name: Zip pfaedle SNCF
         run: zip -9 -r sncf_pfaedle.zip sncf/*
