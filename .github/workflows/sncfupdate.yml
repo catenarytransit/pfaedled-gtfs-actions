@@ -44,11 +44,11 @@ jobs:
 
       - name: Download SNCF files
         run: |
-          wget https://eu.ftp.opendatasoft.com/sncf/plandata/export-opendata-sncf-gtfs.zip 
+          wget https://eu.ftp.opendatasoft.com/sncf/plandata/Export_OpenData_SNCF_GTFS_NewTripId.zip
 
       - name: Extract SNCF
         run: |
-          unzip export-opendata-sncf-gtfs.zip -d sncf
+          unzip Export_OpenData_SNCF_GTFS_NewTripId.zip -d sncf
 
       - name: Run pfaedle SNCF
         run: |
