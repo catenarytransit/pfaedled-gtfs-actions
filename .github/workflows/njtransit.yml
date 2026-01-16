@@ -48,10 +48,6 @@ jobs:
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-us-northeast-latest.osm.pbf
 
-      - name: Convert OSM file
-        run: |
-          osmconvert pfaedle-filtered-us-northeast-latest.osm.pbf -o=us-northeast.osm
-
       - name: Download NJ GTFS
         id: download_nj_gtfs
         run: |
@@ -95,7 +91,7 @@ jobs:
 
           # Run Pfaedle NJ network
           # We use the combined filter OSM and combine all MOTs into one run
-          pfaedle -x us-northeast.osm nj_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
+          pfaedle -x pfaedle-filtered-us-northeast-latest.osm.pbf nj_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,rail,metro,subway,tram,streetcar --write-colors --drop-shapes true
 
           echo 'move stop times back from the backup'
           mv stop_times_backup.txt nj_gtfs/stop_times.txt
