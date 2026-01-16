@@ -34,6 +34,8 @@ jobs:
     uses: ./.github/workflows/nah_pfaedle.yml
   njtransit:
     uses: ./.github/workflows/njtransit.yml
+  octranspo:
+    uses: ./.github/workflows/octranspo.yml
   peatus:
     uses: ./.github/workflows/peatus.yml
   uknationalrail:
