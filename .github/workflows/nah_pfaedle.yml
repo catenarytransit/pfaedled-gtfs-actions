@@ -49,15 +49,10 @@ jobs:
            wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf -O railonly-europe-latest.osm.pbf
            wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-germany-latest.osm.pbf -O pfaedle-filtered-germany-latest.osm.pbf
 
-       - name: Convert OSM files
-         run: |
-           osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-           osmconvert pfaedle-filtered-germany-latest.osm.pbf -o=pfaedle-filtered-germany-latest.osm
-
        - name: Download SH GTFS
          id: download_sh_gtfs
          run: |
-           wget https://opendata.schleswig-holstein.de/dataset/5e0652d8-7f59-42fc-92ab-a6358f800e1d/resource/30bb697f-b7ae-4af5-8e7a-8862e2cc9d04/download/fahrplandaten -O sh_gtfs.zip
+           wget https://opendata.schleswig-holstein.de/dataset/5e0652d8-7f59-42fc-92ab-a6358f800e1d/resource/5278f080-f5d7-4aad-bab8-7a855ce91ce7/download/fahrplandaten -O sh_gtfs.zip
            echo "SH_GTFS_FILE=sh_gtfs.zip" >> $GITHUB_OUTPUT
 
        - name: Calculate SH GTFS MD5 Hash
@@ -91,10 +86,10 @@ jobs:
            unzip sh_gtfs.zip -d sh_gtfs
 
            # Run Pfaedle SH Bus network
-           pfaedle -x pfaedle-filtered-germany-latest.osm sh_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
+           pfaedle -x pfaedle-filtered-germany-latest.osm.pbf sh_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry --write-colors
 
            # Run Pfaedle SH Rail network
-           pfaedle -x railonly-europe-latest.osm sh_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+           pfaedle -x railonly-europe-latest.osm.pbf sh_gtfs -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
 
            # Zip sh gtfs
            (cd sh_gtfs && zip -r -9 ../sh_gtfs_pfaedle.zip .)

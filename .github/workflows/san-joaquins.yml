@@ -38,10 +38,6 @@ jobs:
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-california-latest.osm.pbf
 
-      - name: Convert OSM file
-        run: |
-          osmconvert pfaedle-filtered-california-latest.osm.pbf -o=pfaedle-filtered-california-latest.osm
-
       - name: Download San Joaquins GTFS
         id: download_gold_runner_gtfs
         run: |
@@ -86,7 +82,7 @@ jobs:
           sed -i '/^[[:space:]]*$/d' gold_runner_gtfs/trips.txt
 
           # Run Pfaedle on San Joaquins network
-          pfaedle -x pfaedle-filtered-california-latest.osm gold_runner_gtfs -F --inplace --mots rail --write-colors --drop-shapes true
+          pfaedle -x pfaedle-filtered-california-latest.osm.pbf gold_runner_gtfs -F --inplace --mots rail --write-colors --drop-shapes true
 
           # Zip the processed San Joaquins GTFS
           zip -r -9 gold_runner_gtfs_pfaedle.zip gold_runner_gtfs/
