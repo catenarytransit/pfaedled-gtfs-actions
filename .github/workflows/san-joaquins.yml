@@ -81,6 +81,9 @@ jobs:
           sed -i '/^[[:space:]]*$/d' gold_runner_gtfs/stop_times.txt
           sed -i '/^[[:space:]]*$/d' gold_runner_gtfs/trips.txt
 
+          #Gold runner delete shapes
+          rm gold_runner_gtfs/shapes.txt
+
           # Run Pfaedle on San Joaquins network
           pfaedle -x pfaedle-filtered-california-latest.osm.pbf gold_runner_gtfs -F --inplace --mots rail --write-colors --drop-shapes true
 
