@@ -91,6 +91,7 @@ jobs:
            cp seoul_gtfs/stop_times.txt stop_times_backup.txt
 
            # Run Pfaedle Seoul Metro
+           sed -i 's/경의선/K/g' seoul_gtfs/trips.txt
            pfaedle -x pfaedle-filtered-korea-latest.osm.pbf seoul_gtfs -F --inplace --write-colors
 
             echo 'move stop times back to the backup'
