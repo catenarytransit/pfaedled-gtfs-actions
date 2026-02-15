@@ -38,6 +38,8 @@ jobs:
     uses: ./.github/workflows/octranspo.yml
   peatus:
     uses: ./.github/workflows/peatus.yml
+  seoul:
+    uses: ./.github/workflows/seoulmetro.yml
   uknationalrail:
     uses: ./.github/workflows/nationalrail.yml
     secrets:

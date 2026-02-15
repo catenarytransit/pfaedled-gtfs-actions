@@ -1,0 +1,144 @@
+name: Update Pfaedle files Seoul
+
+on:
+   workflow_call:
+
+jobs:
+   upload-release-asset:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: write
+       packages: write
+
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
+
+       - name: Install Go
+         uses: actions/setup-go@v5
+         with:
+          go-version: '^1.13.1'
+
+       - name: Install GTFS tidy
+         run: |
+          go install github.com/patrickbr/gtfstidy@latest
+          gtfstidy --help
+
+       - name: Download unzip and zip
+         run: sudo apt install unzip zip
+
+       - name: Install OSM tools
+         run: sudo apt install osmium-tool osmctools
+
+       - name: Build Pfaedle
+         run: |
+           if ! command -v pfaedle &> /dev/null; then
+             git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+             cd pfaedle
+             mkdir build && cd build
+             cmake ..
+             make -j
+             sudo make install
+             cd ..
+           else
+             echo "Pfaedle is already installed."
+           fi
+
+       - name: Download osm files
+         run: |
+           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-korea-latest.osm.pbf
+
+
+
+       - name: Download Seoul Metro GTFS
+         id: download_seoul_gtfs
+         run: |
+           wget https://github.com/catenarytransit/seoulmetro-gtfs/releases/download/latest/gtfs.zip -O seoul_gtfs.zip
+           echo "SEOUL_GTFS_FILE=seoul_gtfs.zip" >> $GITHUB_OUTPUT
+
+       - name: Calculate Seoul Metro GTFS MD5 Hash
+         id: calculate_seoul_gtfs_md5
+         run: |
+           filepath="${{ steps.download_seoul_gtfs.outputs.SEOUL_GTFS_FILE }}"
+           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+           echo "SEOUL_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+           echo "SEOUL_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+           echo "$md5_hash" > "$filepath.md5"
+
+       - name: Download Existing Seoul Metro GTFS MD5 Hash
+         id: download_existing_seoul_gtfs_md5
+         run: |
+           ASSET_NAME="${{ steps.download_seoul_gtfs.outputs.SEOUL_GTFS_FILE }}"
+           MD5_ASSET_NAME="${ASSET_NAME}.md5"
+           RELEASE_TAG="latest"
+           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+           if wget --spider --quiet "$RELEASE_URL"; then
+             echo "SEOUL_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+             wget --quiet -O existing_seoul_gtfs_md5.txt "$RELEASE_URL"
+             EXISTING_SEOUL_GTFS_MD5=$(cat existing_seoul_gtfs_md5.txt)
+             echo "EXISTING_SEOUL_GTFS_MD5=$EXISTING_SEOUL_GTFS_MD5" >> $GITHUB_OUTPUT
+           else
+             echo "SEOUL_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+           fi
+
+       - name: Run Pfaedle and Zip (Conditional)
+         if: steps.download_existing_seoul_gtfs_md5.outputs.SEOUL_GTFS_MD5_EXISTS == 'false' || steps.calculate_seoul_gtfs_md5.outputs.SEOUL_GTFS_MD5 != steps.download_existing_seoul_gtfs_md5.outputs.EXISTING_SEOUL_GTFS_MD5
+         run: |
+           # Unzip Seoul GTFS
+           unzip seoul_gtfs.zip -d seoul_gtfs
+           rm seoul_gtfs.zip
+
+           cp seoul_gtfs/stop_times.txt stop_times_backup.txt
+
+           # Run Pfaedle Seoul Metro
+           pfaedle -x pfaedle-filtered-korea-latest.osm.pbf seoul_gtfs -F --inplace --write-colors
+
+            echo 'move stop times back to the backup'
+
+           mv stop_times_backup.txt seoul_gtfs/stop_times.txt
+
+           echo 'gtfs tidy running'
+
+           head -n -1 seoul_gtfs/shapes.txt > seoul_gtfs/shapes.txt.tmp; mv seoul_gtfs/shapes.txt.tmp seoul_gtfs/shapes.txt
+
+           #gtfstidy --fix --drop-errs -o seoul_gtfs_tidy/ seoul_gtfs/
+
+           echo 'zipping...'
+
+           # Zip seoul gtfs
+           (cd seoul_gtfs && zip -r -9 ../seoul_gtfs_pfaedle.zip .)
+         id: run_pfaedle_zip
+
+       - name: Upload Assets Seoul Metro GTFS
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_TOKEN: ${{ github.token }}
+           ASSET_PATH: seoul_gtfs_pfaedle.zip
+           MD5_ASSET_PATH: ${{ steps.calculate_seoul_gtfs_md5.outputs.SEOUL_GTFS_MD5_FILE }}
+           RELEASE_TAG: latest
+         run: |
+           NEW_MD5="${{ steps.calculate_seoul_gtfs_md5.outputs.SEOUL_GTFS_MD5 }}"
+           MD5_EXISTS="${{ steps.download_existing_seoul_gtfs_md5.outputs.SEOUL_GTFS_MD5_EXISTS }}"
+           EXISTING_MD5="${{ steps.download_existing_seoul_gtfs_md5.outputs.EXISTING_SEOUL_GTFS_MD5 }}"
+           ASSET_TO_UPLOAD="${{ steps.run_pfaedle_zip.outputs.result == 'success' && steps.run_pfaedle_zip.outcome == 'success' }}"
+
+           if [[ "$MD5_EXISTS" == "false" ]]; then
+             echo "No existing MD5 found for Seoul Metro GTFS. Uploading both file and MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             else
+               echo "Pfaedle and zip were skipped, not uploading main asset."
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+             echo "Existing MD5 for Seoul Metro GTFS is different. Uploading both file and new MD5."
+             if [[ -f "$ASSET_PATH" ]]; then
+               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             else
+               echo "Pfaedle and zip were skipped, not uploading main asset."
+             fi
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           else
+             echo "Existing MD5 for Seoul Metro GTFS matches the new MD5. Skipping upload."
+           fi
+         shell: bash
