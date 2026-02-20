@@ -22,9 +22,6 @@ jobs:
       - name: Download unzip and zip
         run: sudo apt install unzip zip -y
 
-      - name: Install OSM tools
-        run: sudo apt install osmium-tool osmctools -y
-
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
 
@@ -45,10 +42,6 @@ jobs:
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-france-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert pfaedle-filtered-france-latest.osm.pbf -o=france-latest.osm
 
       - name: Download Lille GTFS
         run: wget https://media.ilevia.fr/opendata/gtfs.zip -O lille.zip
@@ -58,7 +51,7 @@ jobs:
           unzip lille.zip -d lille
 
       - name: Run pfaedle Lille
-        run: ./pfaedle/build/pfaedle -x france-latest.osm lille -F --inplace
+        run: ./pfaedle/build/pfaedle -x pfaedle-filtered-france-latest.osm.pbf lille -F --inplace
 
       - name: Zip pfaedle Lille
         run: zip -9 -r lille_pfaedle.zip lille/*

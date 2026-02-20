@@ -14,11 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Apt Update
+        run: sudo apt update
+
       - name: Download unzip and zip
         run: sudo apt install unzip zip -y
-
-      - name: Install OSM tools
-        run: sudo apt install osmium-tool osmctools -y
 
       - name: Install Go
         uses: actions/setup-go@v5
@@ -48,11 +48,6 @@ jobs:
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-dach-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-          osmconvert pfaedle-filtered-dach-latest.osm.pbf -o=dach-latest.osm
 
       - name: Download MVV GTFS
         run: wget https://www.mvv-muenchen.de/fileadmin/mediapool/02-Fahrplanauskunft/03-Downloads/openData/mvv_gtfs.zip
@@ -61,10 +56,10 @@ jobs:
         run: unzip mvv_gtfs.zip -d mvv_gtfs
 
       - name: Run Pfaedle MVV Bus network
-        run: pfaedle -x dach-latest.osm mvv_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors --drop-shapes true
+        run: pfaedle -x pfaedle-filtered-dach-latest.osm.pbf mvv_gtfs -F --inplace --mots bus,trolley-bus,trolleybus,trolley,ferry,tram,subway,metro,streetcar --write-colors --drop-shapes true
 
       - name: Run Pfaedle MVV Rail network
-        run: pfaedle -x railonly-europe-latest.osm mvv_gtfs -F --inplace --mots rail --write-colors  --drop-shapes true
+        run: pfaedle -x railonly-europe-latest.osm.pbf mvv_gtfs -F --inplace --mots rail --write-colors  --drop-shapes true
 
       - name: Zip se gtfs
         run:  zip -r -9 mvv_gtfs_pfaedle.zip mvv_gtfs/*

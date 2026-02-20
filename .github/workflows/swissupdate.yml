@@ -27,9 +27,6 @@ jobs:
        - name: Download unzip and zip
          run: sudo apt install unzip zip
 
-       - name: Install OSM tools
-         run: sudo apt install osmium-tool osmctools
-
        - name: Build Pfaedle
          run: |
            if ! command -v pfaedle &> /dev/null; then

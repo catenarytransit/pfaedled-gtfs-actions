@@ -14,11 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Apt Update
+        run: sudo apt update
+
       - name: Download unzip and zip
         run: sudo apt install unzip zip -y
-
-      - name: Install OSM tools
-        run: sudo apt install osmium-tool osmctools -y
 
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
@@ -40,10 +40,6 @@ jobs:
       - name: Download osm files
         run: |
           wget https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert guangdong-latest.osm.pbf -o=guangdong-latest.osm
 
       - name: Download Hong Kong GTFS
         run: wget https://static.data.gov.hk/td/pt-headway-tc/gtfs.zip -O hk_gtfs.zip
@@ -55,7 +51,7 @@ jobs:
 
       - name: Run Hong Kong pfaedle
         run: |
-          pfaedle -x guangdong-latest.osm hk_gtfs --write-colors
+          pfaedle -x guangdong-latest.osm.pbf hk_gtfs --write-colors
 
       - name: Zip the resulting GTFS Hong Kong
         run: zip -r hk-gtfs-pfaedle.zip gtfs-out

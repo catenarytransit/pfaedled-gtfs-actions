@@ -42,9 +42,6 @@ jobs:
         run: |
           osmium tags-filter -o railonly-socal-latest.osm.pbf --expressions=railway-filter.txt socal-latest.osm.pbf
 
-      - name: Convert PBF to XML
-        run: osmconvert railonly-socal-latest.osm.pbf -o=railonly-socal-latest.osm
-
       - name: Download metrolink gtfs
         run: wget https://metrolinktrains.com/globalassets/about/gtfs/gtfs.zip -O metrolink.zip
 
@@ -53,7 +50,7 @@ jobs:
 
       - name: Run Metrolink pfaedle
         run: |
-          pfaedle -x railonly-socal-latest.osm metrolink-gtfs -F --inplace
+          pfaedle -x railonly-socal-latest.osm.pbf metrolink-gtfs -F --inplace
 
       - name: Zip metrolink gtfs
         run: zip -9 -r metrolink-pfaedle.zip metrolink-gtfs/*

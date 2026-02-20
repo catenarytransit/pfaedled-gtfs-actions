@@ -17,9 +17,6 @@ jobs:
       - name: Download unzip and zip
         run: sudo apt install unzip zip -y
 
-      - name: Install OSM tools
-        run: sudo apt install osmium-tool osmctools -y
-
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
 
@@ -40,10 +37,7 @@ jobs:
       - name: Download osm files
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-estonia-latest.osm.pbf -O estonia-latest.osm.pbf
-          
-      - name: Convert OSM files
-        run: |
-          osmconvert estonia-latest.osm.pbf -o=estonia-latest.osm
+
 
       - name: Download Estonia GTFS
         run: wget https://peatus.ee/gtfs/gtfs.zip -O peatus_gtfs.zip
@@ -55,7 +49,7 @@ jobs:
 
       - name: Run Estonia pfaedle
         run: |
-          pfaedle -x estonia-latest.osm peatus_gtfs --write-colors
+          pfaedle -x estonia-latest.osm.pbf peatus_gtfs --write-colors
 
       - name: Zip the resulting GTFS Estonia
         run: zip -r peatus-gtfs-pfaedle.zip gtfs-out

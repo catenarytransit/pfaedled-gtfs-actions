@@ -50,12 +50,6 @@ jobs:
         run: |
           osmium tags-filter -o railonly-portugal-latest.osm.pbf --expressions=railway-filter.txt portugal-latest.osm.pbf
 
-      - name: Convert OSM files
-        run: |
-          osmconvert ile-de-france-latest.osm.pbf -o=ile-de-france-latest.osm
-          osmconvert railonly-portugal-latest.osm.pbf -o=railonly-portugal-latest.osm
-          osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-
       - name: Download zip of ile de france gtfs
         uses: wei/wget@v1
         with:
@@ -82,7 +76,7 @@ jobs:
         run: unzip renfe_operadora.zip -d renfe_operadora 
       
       - name: Run pfaedle SNCB
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm sncb_gtfs -F --inplace  --write-colors --drop-shapes true
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf sncb_gtfs -F --inplace  --write-colors --drop-shapes true
 
       - name: Zip SNCB pfaedle result
         run: zip -9 -r sncb_gtfs_pfaedle.zip sncb_gtfs/*
@@ -100,7 +94,7 @@ jobs:
         if: env.ASSET_PATH != '' 
 
       - name: Run pfaedle renfe operadora
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm renfe_operadora -F --inplace --write-colors
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf renfe_operadora -F --inplace --write-colors
 
       - name: Zip renfe operadora results
         run: zip -9 -r renfe_operadora_pfaedle.zip renfe_operadora/*
@@ -124,11 +118,11 @@ jobs:
         
       - name: Run Ile de france pfaedle Local rail and bus
         run: |
-          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm IDFM-gtfs -F --inplace --mots metro,streetcar,tram,subway,coach,monorail,trolley,trolleybus,bus
+          ./pfaedle/build/pfaedle -x ile-de-france-latest.osm.pbf IDFM-gtfs -F --inplace --mots metro,streetcar,tram,subway,coach,monorail,trolley,trolleybus,bus
 
       - name: Run Ile de france pfaedle Intercity rail
         run: |
-          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm IDFM-gtfs -F --inplace --mots rail
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf IDFM-gtfs -F --inplace --mots rail
 
       - name: Zip the resulting GTFS Ile de France
         run: zip -9 -r IDFM-gtfs-pfaedle.zip IDFM-gtfs/*
@@ -154,7 +148,7 @@ jobs:
         run: unzip trenord.zip -d trenord
 
       - name: Pfaedle trenord
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm trenord -F --inplace --mots rail
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf trenord -F --inplace --mots rail
 
       - name: Zip trenord
         run: zip -9 -r trenord-pfaedle.zip trenord/*
@@ -180,7 +174,7 @@ jobs:
         run: unzip zssk_gtfs.zip -d zssk_gtfs
 
       - name: Pfaedle ZSSK
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm zssk_gtfs -F --inplace --mots rail --drop-shapes true
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf zssk_gtfs -F --inplace --mots rail --drop-shapes true
 
       - name: Zip ZSSK
         run: zip -9 -r zssk_gtfs-pfaedle.zip zssk_gtfs/*
@@ -206,7 +200,7 @@ jobs:
         run: unzip gtfs_generic_eu.zip -d flix_eu
 
       - name: pfaedle Flix EU
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm flix_eu -F --inplace --mots rail --drop-shapes true
+        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf flix_eu -F --inplace --mots rail --drop-shapes true
 
       - name: Zip Flix EU
         run: zip -9 -r flix_eu-pfaedle.zip flix_eu/*

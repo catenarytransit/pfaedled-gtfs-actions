@@ -38,9 +38,6 @@ jobs:
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
 
-      - name: Convert PBF to XML
-        run: osmconvert railonly-europe-latest.osm.pbf -o=railonly-europe-latest.osm
-
       - name: Download ggu cz gtfs
         run: wget https://data.jr.ggu.cz/results/latest/CZPTT_GTFS.zip -O czptt.zip
 
@@ -49,7 +46,7 @@ jobs:
 
       - name: Run czptt pfaedle
         run: |
-          pfaedle -x railonly-europe-latest.osm czptt-gtfs -F --inplace --no-trie
+          pfaedle -x railonly-europe-latest.osm.pbf czptt-gtfs -F --inplace --no-trie
 
       - name: Zip czptt gtfs
         run: zip -9 -r czptt-pfaedle.zip czptt-gtfs/*
