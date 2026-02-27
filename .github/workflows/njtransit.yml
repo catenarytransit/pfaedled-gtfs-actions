@@ -48,7 +48,12 @@ jobs:
       - name: Download NJ GTFS
         id: download_nj_gtfs
         run: |
-          wget https://testpcsdata.njtransit.com/api/GTFS/getGTFS -O nj_gtfs.zip
+          curl -X 'POST' \
+          'https://testpcsdata.njtransit.com/api/GTFSG2/getGTFS' \
+          -H 'accept: */*' \
+          -H 'Content-Type: multipart/form-data' \
+          -F 'token=638671989162459331' \
+          -o nj_gtfs.zip
           echo "NJ_GTFS_FILE=nj_gtfs.zip" >> $GITHUB_OUTPUT
 
       - name: Calculate NJ GTFS MD5 Hash
