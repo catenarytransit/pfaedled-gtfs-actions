@@ -48,12 +48,7 @@ jobs:
       - name: Download NJ GTFS
         id: download_nj_gtfs
         run: |
-          curl -X 'POST' \
-          'https://pcsdata.njtransit.com/api/GTFSG2/getGTFS' \
-          -H 'accept: */*' \
-          -H 'Content-Type: multipart/form-data' \
-          -F 'token=638671989162459331' \
-          -o nj_gtfs.zip
+          wget https://pcsdata.njtransit.com/api/GTFSG2/getGTFS -O nj_gtfs.zip
           echo "NJ_GTFS_FILE=nj_gtfs.zip" >> $GITHUB_OUTPUT
           ls
 
