@@ -1,0 +1,51 @@
+name: Generate Trenitalia GTFS
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  update-trenitalia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip gh curl wget
+
+      - name: Download TrenItalia Netex file
+        run: |
+          mkdir -p ntfs_data
+          wget -O trenitalia.xml.gz "https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/resource"
+          gunzip trenitalia.xml.gz
+          mv trenitalia.xml ntfs_data/
+
+      - name: Install transit_model ntfs2gtfs
+        run: |
+          git clone https://github.com/hove-io/transit_model
+          cd transit_model
+          cargo install --path ntfs2gtfs
+
+      - name: Convert to GTFS
+        run: |
+          mkdir -p gtfs_out
+          ntfs2gtfs --input ntfs_data/ --output gtfs_out/
+
+      - name: Zip output
+        run: |
+          cd gtfs_out
+          zip -r ../trenitalia_gtfs.zip *
+
+      - name: Upload to latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload latest trenitalia_gtfs.zip --repo catenarytransit/pfaedled-gtfs-actions --clobber

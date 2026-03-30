@@ -45,5 +45,7 @@ jobs:
     secrets:
       NR_USERNAME: ${{ secrets.NR_USERNAME }}
       NR_PASSWORD: ${{ secrets.NR_PASSWORD }}
+  trenitalia:
+    uses: ./.github/workflows/trenitalia.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
