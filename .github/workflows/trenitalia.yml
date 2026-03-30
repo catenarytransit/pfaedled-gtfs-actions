@@ -12,8 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Install required tools
         run: |
@@ -22,26 +25,21 @@ jobs:
 
       - name: Download TrenItalia Netex file
         run: |
-          mkdir -p ntfs_data
           wget -O trenitalia.xml.gz "https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/resource"
           gunzip trenitalia.xml.gz
-          mv trenitalia.xml ntfs_data/
 
-      - name: Install transit_model ntfs2gtfs
+      - name: Build netex-to-gtfs
         run: |
-          git clone https://github.com/hove-io/transit_model
-          cd transit_model
-          cargo install --path ntfs2gtfs
+          git clone https://github.com/entur/netex-to-gtfs.git
+          cd netex-to-gtfs
+          mvn clean install
 
       - name: Convert to GTFS
         run: |
-          mkdir -p gtfs_out
-          ntfs2gtfs --input ntfs_data/ --output gtfs_out/
-
-      - name: Zip output
-        run: |
-          cd gtfs_out
-          zip -r ../trenitalia_gtfs.zip *
+          java -jar netex-to-gtfs/target/netex-to-gtfs.jar \
+            --input-file trenitalia.xml \
+            --output-file trenitalia_gtfs.zip \
+            --profile EPIP
 
       - name: Upload to latest release
         env:
