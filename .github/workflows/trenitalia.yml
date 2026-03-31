@@ -28,18 +28,18 @@ jobs:
           wget -O trenitalia.xml.gz "https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/resource"
           gunzip trenitalia.xml.gz
 
-      - name: Build netex-to-gtfs
+      - name: Zip TrenItalia Netex file
         run: |
-          git clone https://github.com/entur/netex-to-gtfs.git
-          cd netex-to-gtfs
-          mvn clean install
+          zip trenitalia.zip trenitalia.xml
+
+      - name: Build trenitalia-converter
+        run: |
+          cd trenitalia-converter
+          mvn -B clean package
 
       - name: Convert to GTFS
         run: |
-          java -jar netex-to-gtfs/target/netex-to-gtfs.jar \
-            --input-file trenitalia.xml \
-            --output-file trenitalia_gtfs.zip \
-            --profile EPIP
+          java -jar trenitalia-converter/target/trenitalia-converter-1.0-SNAPSHOT-jar-with-dependencies.jar trenitalia.zip trenitalia_gtfs.zip
 
       - name: Upload to latest release
         env:
