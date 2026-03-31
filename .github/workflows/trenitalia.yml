@@ -26,7 +26,7 @@ jobs:
       - name: Download TrenItalia Netex file
         run: |
           wget -O trenitalia.xml.gz "https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/resource"
-          gunzip trenitalia.xml.gz
+          gunzip -k trenitalia.xml.gz
 
       - name: Upload raw trenitalia
         env:
