@@ -39,14 +39,18 @@ jobs:
         run: |
           zip trenitalia.zip trenitalia.xml
 
-      - name: Build trenitalia-converter
+      - name: Build netex-to-gtfs-converter
         run: |
-          cd trenitalia-converter
-          mvn -B clean package
+          git clone https://github.com/catenarytransit/netex-to-gtfs-converter
+          cd netex-to-gtfs-converter
+          cargo build --release
 
       - name: Convert to GTFS
         run: |
-          java -jar trenitalia-converter/target/trenitalia-converter-1.0-SNAPSHOT-jar-with-dependencies.jar trenitalia.zip trenitalia_gtfs.zip
+          ./netex-to-gtfs-converter/target/release/netex-to-gtfs-converter --input trenitalia.xml --output trenitalia_gtfs_out/
+
+      - name: Zip folder
+        run: zip -r trenitalia_gtfs.zip trenitalia_gtfs_out/
 
       - name: Upload to latest release
         env:
