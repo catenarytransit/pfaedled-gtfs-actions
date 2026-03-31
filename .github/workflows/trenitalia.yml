@@ -28,6 +28,13 @@ jobs:
           wget -O trenitalia.xml.gz "https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/resource"
           gunzip trenitalia.xml.gz
 
+      - name: Upload raw trenitalia
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload latest trenitalia.xml.gz --repo catenarytransit/pfaedled-gtfs-actions --clobber
+
       - name: Zip TrenItalia Netex file
         run: |
           zip trenitalia.zip trenitalia.xml
