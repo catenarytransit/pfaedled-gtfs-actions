@@ -1,4 +1,4 @@
-name: Swiss Manual Update Trigger
+name: Manual VVS Download
 
 on:
   workflow_dispatch:
@@ -9,4 +9,4 @@ permissions:
 
 jobs:
   call-update:
-    uses: ./.github/workflows/swissupdate.yml
+    uses: ./.github/workflows/vvs_download.yml

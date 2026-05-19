@@ -1,0 +1,71 @@
+name: Download VVS Realtime
+
+on:
+   workflow_call:
+
+jobs:
+   upload-release-asset:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: write
+       packages: write
+
+     steps:
+       - name: Checkout code
+         uses: actions/checkout@v3
+
+       - name: Download VVS Realtime
+         id: download_vvs
+         run: |
+           wget --quiet https://download.vvs.de/gtfs_realtime.zip -O vvs-de.zip
+           echo "FILE_PATH=vvs-de.zip" >> $GITHUB_OUTPUT
+
+       - name: Calculate MD5 Hash
+         id: calculate_md5
+         run: |
+           filepath="${{ steps.download_vvs.outputs.FILE_PATH }}"
+           md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+           echo "MD5_HASH=$md5_hash" >> $GITHUB_OUTPUT
+           echo "MD5_FILE_PATH=$filepath.md5" >> $GITHUB_OUTPUT
+           echo "$md5_hash" > "$filepath.md5"
+
+       - name: Download Existing MD5 Hash
+         id: download_existing_md5
+         run: |
+           ASSET_NAME="${{ steps.download_vvs.outputs.FILE_PATH }}"
+           MD5_ASSET_NAME="${ASSET_NAME}.md5"
+           RELEASE_TAG="latest"
+           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+           if wget --spider --quiet "$RELEASE_URL"; then
+             echo "MD5_EXISTS=true" >> $GITHUB_OUTPUT
+             wget --quiet -O existing_md5.txt "$RELEASE_URL"
+             EXISTING_MD5=$(cat existing_md5.txt)
+             echo "EXISTING_MD5=$EXISTING_MD5" >> $GITHUB_OUTPUT
+           else
+             echo "MD5_EXISTS=false" >> $GITHUB_OUTPUT
+           fi
+
+       - name: Upload Assets
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GH_TOKEN: ${{ github.token }}
+           ASSET_PATH: ${{ steps.download_vvs.outputs.FILE_PATH }}
+           MD5_ASSET_PATH: ${{ steps.calculate_md5.outputs.MD5_FILE_PATH }}
+           RELEASE_TAG: latest
+         run: |
+           NEW_MD5="${{ steps.calculate_md5.outputs.MD5_HASH }}"
+           MD5_EXISTS="${{ steps.download_existing_md5.outputs.MD5_EXISTS }}"
+           EXISTING_MD5="${{ steps.download_existing_md5.outputs.EXISTING_MD5 }}"
+
+           if [[ "$MD5_EXISTS" == "false" ]]; then
+             echo "No existing MD5 found. Uploading both file and MD5."
+             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+             echo "Existing MD5 is different. Uploading both file and new MD5."
+             gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+           else
+             echo "Existing MD5 matches the new MD5. Skipping upload."
+           fi
+         shell: bash

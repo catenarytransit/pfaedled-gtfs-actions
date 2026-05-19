@@ -47,5 +47,7 @@ jobs:
       NR_PASSWORD: ${{ secrets.NR_PASSWORD }}
   trenitalia:
     uses: ./.github/workflows/trenitalia.yml
+  vvs-download:
+    uses: ./.github/workflows/vvs_download.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
