@@ -51,7 +51,7 @@ jobs:
       - name: Download OCTranspo GTFS
         id: download_oct_gtfs
         run: |
-          wget "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.zip" -O octranspo_gtfs.zip
+          wget "https://oct-gtfs-emasagcnfmcgeham.z01.azurefd.net/public-access/GTFSExport.translate.zip" -O octranspo_gtfs.zip
           echo "OC_GTFS_FILE=octranspo_gtfs.zip" >> $GITHUB_OUTPUT
 
       - name: Calculate OCTranspo GTFS MD5 Hash
