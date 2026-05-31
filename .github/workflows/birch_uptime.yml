@@ -1,4 +1,4 @@
-name: Birch uptime check
+name: birch_uptime
 
 on:
   schedule:
@@ -12,95 +12,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check-birch:
+  check-uptime:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
 
     steps:
-      - name: Check birch.catenarymaps.org
-        id: check
-        shell: bash
-        run: |
-          set +e
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-          URL="https://birch.catenarymaps.org"
-
-          HTTP_CODE="$(curl \
-            --silent \
-            --show-error \
-            --output /tmp/birch-response.txt \
-            --write-out "%{http_code}" \
-            --connect-timeout 10 \
-            --max-time 20 \
-            --retry 2 \
-            --retry-delay 5 \
-            "$URL")"
-
-          CURL_EXIT="$?"
-
-          echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
-          echo "curl_exit=$CURL_EXIT" >> "$GITHUB_OUTPUT"
-
-          if [ "$CURL_EXIT" -ne 0 ] || [ "$HTTP_CODE" != "200" ]; then
-            echo "Birch is unhealthy: curl_exit=$CURL_EXIT http_code=$HTTP_CODE"
-            exit 1
-          fi
-
-          echo "Birch is healthy: HTTP $HTTP_CODE"
-
-      - name: Send Discord alert
-        if: failure()
+      - name: Run Uptime Checker
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          HTTP_CODE: ${{ steps.check.outputs.http_code }}
-          CURL_EXIT: ${{ steps.check.outputs.curl_exit }}
-          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        shell: bash
         run: |
-          python3 <<'PY' > /tmp/discord-payload.json
-          import json
-          import os
-          from datetime import datetime, timezone
+          cd uptime-checker
+          cargo run --release
 
-          payload = {
-              "content": "<@204371573799518208>",
-              "allowed_mentions": {
-                  "users": ["204371573799518208"]
-              },
-              "embeds": [
-                  {
-                      "title": "🚨 Birch is unreachable or unhealthy",
-                      "description": "`https://birch.catenarymaps.org` did not return HTTP 200.",
-                      "color": 15158332,
-                      "fields": [
-                          {
-                              "name": "HTTP status",
-                              "value": os.environ.get("HTTP_CODE") or "unknown",
-                              "inline": True
-                          },
-                          {
-                              "name": "curl exit code",
-                              "value": os.environ.get("CURL_EXIT") or "unknown",
-                              "inline": True
-                          },
-                          {
-                              "name": "Workflow run",
-                              "value": os.environ["RUN_URL"],
-                              "inline": False
-                          }
-                      ],
-                      "timestamp": datetime.now(timezone.utc).isoformat()
-                  }
-              ]
-          }
-
-          print(json.dumps(payload))
-          PY
-
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            -H "Content-Type: application/json" \
-            -d @/tmp/discord-payload.json \
-            "$DISCORD_WEBHOOK_URL"
