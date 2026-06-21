@@ -216,3 +216,28 @@ jobs:
           gh release upload latest "$ASSET_PATH" --clobber
         shell: bash
         if: env.ASSET_PATH != ''
+
+      # Step 1: Conditionally modify hello.txt
+      - name: Check inactivity and update hello.txt
+        run: |
+          LAST_COMMIT_TIME=$(git log -1 --format=%ct)
+          CURRENT_TIME=$(date +%s)
+          DIFF=$((CURRENT_TIME - LAST_COMMIT_TIME))
+          THIRTY_DAYS=2592000
+
+          if [ $DIFF -gt $THIRTY_DAYS ]; then
+            echo "Last commit was over 30 days ago. Updating hello.txt."
+            date > hello.txt
+          else
+            echo "Last commit was recent. Skipping file update."
+          fi
+
+      # Step 2: Commit and push using the community action
+      - name: Push keep-alive commit if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: automated keep-alive update"
+          file_pattern: "hello.txt"
+          commit_user_name: "catenary-automated-workflow"
+          commit_user_email: "catenary-automated-github-workflow@catenarymaps.org"
+          commit_author: "catenary-automated-workflow <catenary-automated-github-workflow@catenarymaps.org>"
