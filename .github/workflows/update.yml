@@ -168,7 +168,7 @@ jobs:
       - name: Download Zssk GTFS
         uses: wei/wget@v1
         with:
-          args: https://www.zsr.sk/files/pre-cestujucich/cestovny-poriadok/gtfs/gtfs.zip -O zssk_gtfs.zip
+          args: https://data.slovensko.sk/download?id=15f1fcf7-615c-4019-8795-efe1c22ba2dd -O zssk_gtfs.zip
 
       - name: Unzip ZSSK
         run: unzip zssk_gtfs.zip -d zssk_gtfs
