@@ -52,7 +52,7 @@ jobs:
 
       - name: Run pfaedle Swiss
         run: |
-          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail,metro,subway,tram,streetcar
           ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus
 
       - name: Zip pfaedle Swiss
