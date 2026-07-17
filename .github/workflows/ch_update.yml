@@ -127,7 +127,7 @@ jobs:
             ch \
             -F \
             --inplace \
-            --mots rail,metro,subway,tram,streetcar,ferry \
+            --mots rail \
             --write-colors
 
       - name: Run Pfaedle for Swiss buses
@@ -138,7 +138,7 @@ jobs:
             ch \
             -F \
             --inplace \
-            --mots bus \
+            --mots bus,metro,subway,tram,streetcar,ferry \
             --write-colors
 
       - name: Zip Pfaedle Swiss
