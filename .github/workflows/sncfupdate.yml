@@ -20,11 +20,8 @@ jobs:
       - name: Install OSM tools
         run: sudo apt install osmium-tool osmctools -y
 
-      - name: Build Pfaedle
-        run: |
-          git clone https://github.com/catenarytransit/pfaedle-rs
-          cd pfaedle-rs
-          cargo build --release
+      - name: install cmake and gcc
+        run: sudo apt install cmake gcc
 
       - name: Download osm files
         run: |
@@ -39,10 +36,24 @@ jobs:
         run: |
           unzip Export_OpenData_SNCF_GTFS_NewTripId.zip -d sncf
 
+      - name: Build Pfaedle
+        run: |
+          if ! command -v pfaedle &> /dev/null; then
+            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
+            cd pfaedle
+            mkdir build && cd build
+            cmake ..
+            make -j
+            sudo make install
+            cd ..
+          else
+            echo "Pfaedle is already installed."
+          fi
+
       - name: Run pfaedle SNCF
         run: |
-          ./pfaedle-rs/target/release/pfaedle-rs -o railonly-europe-latest.osm.pbf -g sncf --mots rail
-          ./pfaedle-rs/target/release/pfaedle-rs -o pfaedle-filtered-france-latest.osm.pbf -g sncf --mots bus
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf sncf  -F --inplace --mots rail
+          ./pfaedle/build/pfaedle -x pfaedle-filtered-france-latest.osm.pbf sncf  -F --inplace --mots bus
 
       - name: Zip pfaedle SNCF
         run: zip -9 -r sncf_pfaedle.zip sncf/*
