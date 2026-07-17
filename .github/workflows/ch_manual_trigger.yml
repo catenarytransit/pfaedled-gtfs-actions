@@ -1,4 +1,4 @@
-name: Manual SNCF Update Trigger
+name: Manual Switzerland Update Trigger
 
 on:
   workflow_dispatch:
