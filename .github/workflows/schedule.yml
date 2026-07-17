@@ -49,5 +49,7 @@ jobs:
     uses: ./.github/workflows/trenitalia.yml
   vvs-download:
     uses: ./.github/workflows/vvs_download.yml
+  ch-update:
+    uses: ./.github/workflows/ch_update.yml
 #  de-call-update:
 #    uses: ./.github/workflows/deutschlandupdate.yml
