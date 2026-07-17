@@ -52,8 +52,8 @@ jobs:
 
       - name: Run pfaedle Swiss
         run: |
-          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail,metro,subway,tram,streetcar
-          ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail,metro,subway,tram,streetcar --write-colors
+          ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus --write-colors
 
       - name: Zip pfaedle Swiss
         run: zip -9 -r ch_pfaedle.zip ch/*
