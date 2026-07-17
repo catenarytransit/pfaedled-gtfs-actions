@@ -29,13 +29,9 @@ jobs:
 
       - name: Build Pfaedle
         run: |
-          if ! command -v pfaedle >/dev/null 2>&1; then
-            git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
-            cmake -S pfaedle -B pfaedle/build
-            cmake --build pfaedle/build --parallel
-          else
-            echo "Pfaedle is already installed."
-          fi
+          git clone https://github.com/catenarytransit/pfaedle-rs
+          cd pfaedle-rs
+          cargo build --release
 
       - name: Download Swiss GTFS
         id: download_swiss_gtfs
@@ -122,12 +118,12 @@ jobs:
       - name: Run Pfaedle for Swiss rail
         if: steps.swiss_gtfs_changed.outputs.changed == 'true'
         run: |
-          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch -F --inplace --mots rail --write-colors
+          ./pfaedle-rs/target/release/pfaedle-rs -o railonly-europe-latest.osm.pbf -g ch --mots rail --write-colors
 
       - name: Run Pfaedle for Swiss buses
         if: steps.swiss_gtfs_changed.outputs.changed == 'true'
         run: |
-          ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch -F --inplace --mots bus,metro,subway,tram,streetcar,ferry --write-colors
+          ./pfaedle-rs/target/release/pfaedle-rs -o switzerland-gtfs-pfaedle.osm.pbf -g ch --mots bus,metro,subway,tram,streetcar,ferry --write-colors
 
       - name: Zip Pfaedle Swiss
         if: steps.swiss_gtfs_changed.outputs.changed == 'true'
