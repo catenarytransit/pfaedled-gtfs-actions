@@ -44,11 +44,11 @@ jobs:
 
       - name: Download Swiss GTFS
         run: |
-          wget https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink
+          wget https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink -O ch-gtfs.zip
 
       - name: Extract Swiss GTFS
         run: |
-          unzip Export_OpenData_SNCF_GTFS_NewTripId.zip -d ch
+          unzip ch-gtfs.zip -d ch
 
       - name: Run pfaedle Swiss
         run: |
