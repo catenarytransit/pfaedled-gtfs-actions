@@ -62,7 +62,6 @@ jobs:
      #     ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus,metro,subway,tram,streetcar
 
       - name: Run Pfaedle for Swiss rail
-        if: steps.swiss_gtfs_changed.outputs.changed == 'true'
         run: |
           ./pfaedle-rs/target/release/pfaedle-rs -o railonly-europe-latest.osm.pbf -g ch --mots rail --write-colors
 
