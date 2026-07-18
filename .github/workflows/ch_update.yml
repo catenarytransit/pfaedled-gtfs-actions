@@ -37,11 +37,11 @@ jobs:
             echo "Pfaedle is already installed."
           fi
 
-      - name: Build Pfaedle Rust
-        run: |
-          git clone https://github.com/catenarytransit/pfaedle-rs
-          cd pfaedle-rs
-          cargo build --release
+      #- name: Build Pfaedle Rust
+      #  run: |
+      #    git clone https://github.com/catenarytransit/pfaedle-rs
+      #    cd pfaedle-rs
+      #    cargo build --release
 
       - name: Download osm files
         run: |
@@ -56,19 +56,19 @@ jobs:
         run: |
           unzip ch-gtfs.zip -d ch
 
-     # - name: Run pfaedle Swiss
-     #  run: |
-      #    ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail
-     #     ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus,metro,subway,tram,streetcar
-
-      - name: Run Pfaedle for Swiss rail
+      - name: Run pfaedle Swiss
         run: |
-          ./pfaedle-rs/target/release/pfaedle-rs -o railonly-europe-latest.osm.pbf -g ch --mots rail --write-colors
+          ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail --write-colors
+          ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus,metro,subway,tram,streetcar  --write-colors
 
-      - name: Run Pfaedle for Swiss buses
-        if: steps.swiss_gtfs_changed.outputs.changed == 'true'
-        run: |
-          ./pfaedle-rs/target/release/pfaedle-rs -o switzerland-gtfs-pfaedle.osm.pbf -g ch --mots bus,metro,subway,tram,streetcar,ferry --write-colors
+      #- name: Run Pfaedle for Swiss rail
+     #   run: |
+     #     ./pfaedle-rs/target/release/pfaedle-rs -o railonly-europe-latest.osm.pbf -g ch --mots rail --write-colors
+
+    #  - name: Run Pfaedle for Swiss buses
+    #    if: steps.swiss_gtfs_changed.outputs.changed == 'true'
+    #    run: |
+    #      ./pfaedle-rs/target/release/pfaedle-rs -o switzerland-gtfs-pfaedle.osm.pbf -g ch --mots bus,metro,subway,tram,streetcar,ferry --write-colors
 
 
       - name: Zip pfaedle Swiss
