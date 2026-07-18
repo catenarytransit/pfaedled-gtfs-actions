@@ -59,7 +59,7 @@ jobs:
       - name: Run pfaedle Swiss
         run: |
           ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail --write-colors
-          ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus,metro,subway,tram,streetcar  --write-colors
+          ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus,metro,subway,tram,streetcar,ferry  --write-colors
 
       #- name: Run Pfaedle for Swiss rail
      #   run: |
