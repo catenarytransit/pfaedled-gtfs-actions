@@ -23,20 +23,39 @@ jobs:
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
 
-      - name: Download osm files
-        run: |
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-france-latest.osm.pbf
-
       - name: Download SNCF files
+        id: download_sncf_gtfs
         run: |
           wget https://eu.ftp.opendatasoft.com/sncf/plandata/Export_OpenData_SNCF_GTFS_NewTripId.zip
+          echo "SNCF_GTFS_FILE=Export_OpenData_SNCF_GTFS_NewTripId.zip" >> $GITHUB_OUTPUT
 
-      - name: Extract SNCF
+      - name: Calculate SNCF GTFS MD5 Hash
+        id: calculate_SNCF_GTFS_MD5
         run: |
-          unzip Export_OpenData_SNCF_GTFS_NewTripId.zip -d sncf
+          filepath="${{ steps.download_sncf_gtfs.outputs.SNCF_GTFS_FILE }}"
+          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+          echo "SNCF_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+          echo "SNCF_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+          echo "$md5_hash" > "$filepath.md5"
+
+      - name: Download Existing SNCF GTFS MD5 Hash
+        id: download_existing_SNCF_GTFS_MD5
+        run: |
+          ASSET_NAME="${{ steps.download_sncf_gtfs.outputs.SNCF_GTFS_FILE }}"
+          MD5_ASSET_NAME="${ASSET_NAME}.md5"
+          RELEASE_TAG="latest"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+          if wget --spider --quiet "$RELEASE_URL"; then
+            echo "SNCF_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+            wget --quiet -O existing_SNCF_GTFS_MD5.txt "$RELEASE_URL"
+            EXISTING_SNCF_GTFS_MD5=$(cat existing_SNCF_GTFS_MD5.txt)
+            echo "EXISTING_SNCF_GTFS_MD5=$EXISTING_SNCF_GTFS_MD5" >> $GITHUB_OUTPUT
+          else
+            echo "SNCF_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build Pfaedle
+        if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
         run: |
           if ! command -v pfaedle &> /dev/null; then
             git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
@@ -50,22 +69,57 @@ jobs:
             echo "Pfaedle is already installed."
           fi
 
+      - name: Download osm files
+        if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
+        run: |
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-france-latest.osm.pbf
+
+      - name: Extract SNCF
+        if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
+        run: |
+          unzip Export_OpenData_SNCF_GTFS_NewTripId.zip -d sncf
+
       - name: Run pfaedle SNCF
+        if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
         run: |
           ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf sncf  -F --inplace --mots rail
           ./pfaedle/build/pfaedle -x pfaedle-filtered-france-latest.osm.pbf sncf  -F --inplace --mots bus
 
       - name: Zip pfaedle SNCF
+        if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
         run: zip -9 -r sncf_pfaedle.zip sncf/*
 
       - name: Upload SNCF results
         env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: sncf_pfaedle.zip # Replace with the actual path to your file
+          ASSET_PATH: sncf_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_FILE }}
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
+          NEW_MD5="${{ steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5 }}"
+
+          if [[ "$MD5_EXISTS" == "false" ]]; then
+            echo "No existing MD5 found for SNCF GTFS. Uploading both file and MD5."
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+            echo "Existing MD5 for SNCF GTFS is different. Uploading both file and new MD5."
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          else
+            echo "Existing MD5 for SNCF GTFS matches the new MD5. Skipping upload."
+          fi
         shell: bash
         if: env.ASSET_PATH != ''

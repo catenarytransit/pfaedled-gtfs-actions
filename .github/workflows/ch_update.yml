@@ -23,7 +23,39 @@ jobs:
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
 
+      - name: Download Swiss GTFS
+        id: download_swiss_gtfs
+        run: |
+          wget https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink -O ch-gtfs.zip
+          echo "SWISS_GTFS_FILE=ch-gtfs.zip" >> $GITHUB_OUTPUT
+
+      - name: Calculate Swiss GTFS MD5 Hash
+        id: calculate_SWISS_GTFS_MD5
+        run: |
+          filepath="${{ steps.download_swiss_gtfs.outputs.SWISS_GTFS_FILE }}"
+          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+          echo "SWISS_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+          echo "SWISS_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+          echo "$md5_hash" > "$filepath.md5"
+
+      - name: Download Existing Swiss GTFS MD5 Hash
+        id: download_existing_SWISS_GTFS_MD5
+        run: |
+          ASSET_NAME="${{ steps.download_swiss_gtfs.outputs.SWISS_GTFS_FILE }}"
+          MD5_ASSET_NAME="${ASSET_NAME}.md5"
+          RELEASE_TAG="latest"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+          if wget --spider --quiet "$RELEASE_URL"; then
+            echo "SWISS_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+            wget --quiet -O existing_SWISS_GTFS_MD5.txt "$RELEASE_URL"
+            EXISTING_SWISS_GTFS_MD5=$(cat existing_SWISS_GTFS_MD5.txt)
+            echo "EXISTING_SWISS_GTFS_MD5=$EXISTING_SWISS_GTFS_MD5" >> $GITHUB_OUTPUT
+          else
+            echo "SWISS_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Pfaedle
+        if: steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 != steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5
         run: |
           if ! command -v pfaedle &> /dev/null; then
             git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
@@ -44,19 +76,18 @@ jobs:
       #    cargo build --release
 
       - name: Download osm files
+        if: steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 != steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/switzerland-gtfs-pfaedle.osm.pbf
 
-      - name: Download Swiss GTFS
-        run: |
-          wget https://data.opentransportdata.swiss/en/dataset/timetable-2026-gtfs2020/permalink -O ch-gtfs.zip
-
       - name: Extract Swiss GTFS
+        if: steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 != steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5
         run: |
           unzip ch-gtfs.zip -d ch
 
       - name: Run pfaedle Swiss
+        if: steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 != steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5
         run: |
           ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf ch  -F --inplace --mots rail --write-colors
           ./pfaedle/build/pfaedle -x switzerland-gtfs-pfaedle.osm.pbf ch  -F --inplace --mots bus,metro,subway,tram,streetcar,ferry  --write-colors
@@ -72,16 +103,39 @@ jobs:
 
 
       - name: Zip pfaedle Swiss
+        if: steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 != steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5
         run: zip -9 -r ch_pfaedle.zip ch/*
 
       - name: Upload Swiss results
         env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: ch_pfaedle.zip # Replace with the actual path to your file
+          ASSET_PATH: ch_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_FILE }}
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
+          NEW_MD5="${{ steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5 }}"
+
+          if [[ "$MD5_EXISTS" == "false" ]]; then
+            echo "No existing MD5 found for Swiss GTFS. Uploading both file and MD5."
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+            echo "Existing MD5 for Swiss GTFS is different. Uploading both file and new MD5."
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          else
+            echo "Existing MD5 for Swiss GTFS matches the new MD5. Skipping upload."
+          fi
         shell: bash
         if: env.ASSET_PATH != ''

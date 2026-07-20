@@ -23,7 +23,39 @@ jobs:
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
 
+      - name: Download Norway GTFS
+        id: download_norway_gtfs
+        run: |
+          wget https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_norway-aggregated-gtfs.zip -O norway.zip
+          echo "NORWAY_GTFS_FILE=norway.zip" >> $GITHUB_OUTPUT
+
+      - name: Calculate Norway GTFS MD5 Hash
+        id: calculate_NORWAY_GTFS_MD5
+        run: |
+          filepath="${{ steps.download_norway_gtfs.outputs.NORWAY_GTFS_FILE }}"
+          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+          echo "NORWAY_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
+          echo "NORWAY_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
+          echo "$md5_hash" > "$filepath.md5"
+
+      - name: Download Existing Norway GTFS MD5 Hash
+        id: download_existing_NORWAY_GTFS_MD5
+        run: |
+          ASSET_NAME="${{ steps.download_norway_gtfs.outputs.NORWAY_GTFS_FILE }}"
+          MD5_ASSET_NAME="${ASSET_NAME}.md5"
+          RELEASE_TAG="latest"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+          if wget --spider --quiet "$RELEASE_URL"; then
+            echo "NORWAY_GTFS_MD5_EXISTS=true" >> $GITHUB_OUTPUT
+            wget --quiet -O existing_NORWAY_GTFS_MD5.txt "$RELEASE_URL"
+            EXISTING_NORWAY_GTFS_MD5=$(cat existing_NORWAY_GTFS_MD5.txt)
+            echo "EXISTING_NORWAY_GTFS_MD5=$EXISTING_NORWAY_GTFS_MD5" >> $GITHUB_OUTPUT
+          else
+            echo "NORWAY_GTFS_MD5_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Pfaedle
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: |
           git clone --recurse-submodules https://github.com/ad-freiburg/pfaedle
           cd pfaedle
@@ -34,6 +66,7 @@ jobs:
           cd ..
 
       - name: Current dir
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: |
           echo "current dir"
           echo $(pwd)
@@ -41,17 +74,17 @@ jobs:
           ls
 
       - name: Download osm files
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: |
           wget https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-norway-latest.osm.pbf
-          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf        
-
-      - name: Download Norway GTFS
-        run: wget https://storage.googleapis.com/marduk-production/outbound/gtfs/rb_norway-aggregated-gtfs.zip -O norway.zip
+          wget https://github.com/catenarytransit/osm-filter/releases/download/latest/railonly-europe-latest.osm.pbf
 
       - name: Unzip Norway GTFS
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: unzip norway.zip -d norway_gtfs
 
       - name: Remove excessively long cruise
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: |
           sed -i '/^HAV:/d' norway_gtfs/stop_times.txt
           sed -i '/^HAV:/d' norway_gtfs/trips.txt
@@ -61,21 +94,45 @@ jobs:
           sed -i '/^HUR:/d' norway_gtfs/routes.txt
 
       - name: Run pfaedle Norway
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: |
           ./pfaedle/build/pfaedle -x pfaedle-filtered-norway-latest.osm.pbf norway_gtfs -F --inplace --write-colors  --mots metro,streetcar,tram,subway,coach,monorail,trolley,trolleybus,bus
           ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf norway_gtfs -F --inplace --drop-shapes --write-colors  --mots rail
 
       - name: Zip Norway results
+        if: steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS == 'false' || steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 != steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5
         run: zip -9 -r norway_gtfs_pfaedle.zip norway_gtfs/*
 
       - name: Upload Norway results
         env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: norway_gtfs_pfaedle.zip # Replace with the actual path to your file
+          ASSET_PATH: norway_gtfs_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_FILE }}
           RELEASE_TAG: latest
         run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
+          NEW_MD5="${{ steps.calculate_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_NORWAY_GTFS_MD5.outputs.NORWAY_GTFS_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_NORWAY_GTFS_MD5.outputs.EXISTING_NORWAY_GTFS_MD5 }}"
+
+          if [[ "$MD5_EXISTS" == "false" ]]; then
+            echo "No existing MD5 found for Norway GTFS. Uploading both file and MD5."
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+            echo "Existing MD5 for Norway GTFS is different. Uploading both file and new MD5."
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
+            else
+              echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
+          else
+            echo "Existing MD5 for Norway GTFS matches the new MD5. Skipping upload."
+          fi
         shell: bash
         if: env.ASSET_PATH != ''
