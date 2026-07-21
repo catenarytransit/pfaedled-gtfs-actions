@@ -1,0 +1,198 @@
+name: Update Pfaedle file Alsa Bus
+
+on:
+  workflow_call:
+
+jobs:
+  upload-release-asset:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            unzip \
+            zip \
+            osmium-tool \
+            osmctools \
+            cmake \
+            gcc \
+            g++
+
+      - name: Download Alsa Bus GTFS
+        id: download_alsa_bus_gtfs
+        run: |
+          GTFS_FILE="alsa_bus_gtfs.zip"
+
+          curl \
+            --fail \
+            --location \
+            --retry 3 \
+            --retry-delay 5 \
+            --header "ApiKey: d6bfc458-3f53-4456-9108-28fa9f97069d" \
+            --output "$GTFS_FILE" \
+            "https://nap.transportes.gob.es/api/Fichero/download/1133"
+
+          test -s "$GTFS_FILE"
+
+          echo "ALSA_BUS_GTFS_FILE=$GTFS_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate Alsa Bus GTFS MD5 hash
+        id: calculate_alsa_bus_gtfs_md5
+        run: |
+          filepath="${{ steps.download_alsa_bus_gtfs.outputs.ALSA_BUS_GTFS_FILE }}"
+          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+
+          echo "ALSA_BUS_GTFS_MD5=$md5_hash" >> "$GITHUB_OUTPUT"
+          echo "ALSA_BUS_GTFS_MD5_FILE=$filepath.md5" >> "$GITHUB_OUTPUT"
+
+          echo "$md5_hash" > "$filepath.md5"
+
+      - name: Download existing Alsa Bus GTFS MD5 hash
+        id: download_existing_alsa_bus_gtfs_md5
+        run: |
+          ASSET_NAME="${{ steps.download_alsa_bus_gtfs.outputs.ALSA_BUS_GTFS_FILE }}"
+          MD5_ASSET_NAME="${ASSET_NAME}.md5"
+          RELEASE_TAG="latest"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${MD5_ASSET_NAME}"
+
+          if wget --spider --quiet "$RELEASE_URL"; then
+            echo "ALSA_BUS_GTFS_MD5_EXISTS=true" >> "$GITHUB_OUTPUT"
+
+            wget \
+              --quiet \
+              --output-document existing_alsa_bus_gtfs_md5.txt \
+              "$RELEASE_URL"
+
+            EXISTING_ALSA_BUS_GTFS_MD5=$(cat existing_alsa_bus_gtfs_md5.txt)
+
+            echo "EXISTING_ALSA_BUS_GTFS_MD5=$EXISTING_ALSA_BUS_GTFS_MD5" \
+              >> "$GITHUB_OUTPUT"
+          else
+            echo "ALSA_BUS_GTFS_MD5_EXISTS=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Pfaedle
+        if: >-
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_EXISTS == 'false' ||
+          steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 !=
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5
+        run: |
+          git clone \
+            --recurse-submodules \
+            https://github.com/ad-freiburg/pfaedle
+
+          cmake \
+            -S pfaedle \
+            -B pfaedle/build \
+            -DCMAKE_BUILD_TYPE=Release
+
+          cmake \
+            --build pfaedle/build \
+            --parallel "$(nproc)"
+
+      - name: Download Spain OSM file
+        if: >-
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_EXISTS == 'false' ||
+          steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 !=
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5
+        run: |
+          wget \
+            --output-document pfaedle-filtered-spain-latest.osm.pbf \
+            "https://github.com/catenarytransit/osm-filter/releases/download/latest/pfaedle-filtered-spain-latest.osm.pbf"
+
+          test -s pfaedle-filtered-spain-latest.osm.pbf
+
+      - name: Extract Alsa Bus GTFS
+        if: >-
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_EXISTS == 'false' ||
+          steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 !=
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5
+        run: |
+          mkdir -p alsa_bus
+
+          unzip \
+            "${{ steps.download_alsa_bus_gtfs.outputs.ALSA_BUS_GTFS_FILE }}" \
+            -d alsa_bus
+
+      - name: Run Pfaedle for Alsa Bus
+        if: >-
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_EXISTS == 'false' ||
+          steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 !=
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5
+        run: |
+          ./pfaedle/build/pfaedle \
+            -x pfaedle-filtered-spain-latest.osm.pbf \
+            alsa_bus \
+            -F \
+            --inplace \
+            --mots bus
+
+      - name: Zip Pfaedle Alsa Bus
+        if: >-
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_EXISTS == 'false' ||
+          steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 !=
+          steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5
+        run: |
+          cd alsa_bus
+          zip -9 -r ../alsa_bus_pfaedle.zip .
+
+      - name: Upload Alsa Bus results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: alsa_bus_pfaedle.zip
+          MD5_ASSET_PATH: ${{ steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_FILE }}
+          RELEASE_TAG: latest
+        shell: bash
+        run: |
+          NEW_MD5="${{ steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 }}"
+          MD5_EXISTS="${{ steps.download_existing_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5_EXISTS }}"
+          EXISTING_MD5="${{ steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5 }}"
+
+          if [[ "$MD5_EXISTS" == "false" ]]; then
+            echo "No existing MD5 found for Alsa Bus GTFS."
+
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload \
+                "$RELEASE_TAG" \
+                "$ASSET_PATH" \
+                --clobber
+            else
+              echo "Alsa Bus Pfaedle archive was not generated."
+              exit 1
+            fi
+
+            gh release upload \
+              "$RELEASE_TAG" \
+              "$MD5_ASSET_PATH" \
+              --clobber
+
+          elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
+            echo "Alsa Bus GTFS has changed."
+
+            if [[ -f "$ASSET_PATH" ]]; then
+              gh release upload \
+                "$RELEASE_TAG" \
+                "$ASSET_PATH" \
+                --clobber
+            else
+              echo "Alsa Bus Pfaedle archive was not generated."
+              exit 1
+            fi
+
+            gh release upload \
+              "$RELEASE_TAG" \
+              "$MD5_ASSET_PATH" \
+              --clobber
+
+          else
+            echo "Alsa Bus GTFS has not changed. Skipping upload."
+          fi
