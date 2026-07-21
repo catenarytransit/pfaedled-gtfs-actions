@@ -129,7 +129,7 @@ jobs:
           steps.calculate_alsa_bus_gtfs_md5.outputs.ALSA_BUS_GTFS_MD5 !=
           steps.download_existing_alsa_bus_gtfs_md5.outputs.EXISTING_ALSA_BUS_GTFS_MD5
         run: |
-          ./pfaedle/build/pfaedle -x pfaedle-filtered-spain-latest.osm.pbf alsa_bus -F --inplace --mots bus
+          ./pfaedle/build/pfaedle -c ./pfaedle/pfaedle.cfg -x pfaedle-filtered-spain-latest.osm.pbf alsa_bus -F --inplace --mots bus
 
       - name: Zip Pfaedle Alsa Bus
         if: >-
