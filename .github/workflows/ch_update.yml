@@ -104,13 +104,16 @@ jobs:
 
       - name: Zip pfaedle Swiss
         if: steps.download_existing_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_EXISTS == 'false' || steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5 != steps.download_existing_SWISS_GTFS_MD5.outputs.EXISTING_SWISS_GTFS_MD5
-        run: zip -9 -r ch_pfaedle.zip ch/*
+        run: |
+          zip -9 -r ch_pfaedle.zip ch/*
+          zip -9 -j ch_pfaedle_shapes_only.zip ch/trips.txt ch/shapes.txt
 
       - name: Upload Swiss results
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           ASSET_PATH: ch_pfaedle.zip
+          SHAPES_ONLY_ASSET_PATH: ch_pfaedle_shapes_only.zip
           MD5_ASSET_PATH: ${{ steps.calculate_SWISS_GTFS_MD5.outputs.SWISS_GTFS_MD5_FILE }}
           RELEASE_TAG: latest
         run: |
@@ -125,6 +128,11 @@ jobs:
             else
               echo "Pfaedle and zip were skipped, not uploading main asset."
             fi
+            if [[ -f "$SHAPES_ONLY_ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$SHAPES_ONLY_ASSET_PATH" --clobber
+            else
+              echo "Shapes-only zip was skipped, not uploading shapes-only asset."
+            fi
             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
           elif [[ "$NEW_MD5" != "$EXISTING_MD5" ]]; then
             echo "Existing MD5 for Swiss GTFS is different. Uploading both file and new MD5."
@@ -132,6 +140,11 @@ jobs:
               gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber
             else
               echo "Pfaedle and zip were skipped, not uploading main asset."
+            fi
+            if [[ -f "$SHAPES_ONLY_ASSET_PATH" ]]; then
+              gh release upload "$RELEASE_TAG" "$SHAPES_ONLY_ASSET_PATH" --clobber
+            else
+              echo "Shapes-only zip was skipped, not uploading shapes-only asset."
             fi
             gh release upload "$RELEASE_TAG" "$MD5_ASSET_PATH" --clobber
           else
