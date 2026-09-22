@@ -165,32 +165,6 @@ jobs:
         shell: bash
         if: env.ASSET_PATH != ''
 
-      - name: Download Zssk GTFS
-        uses: wei/wget@v1
-        with:
-          args: https://data.slovensko.sk/download?id=15f1fcf7-615c-4019-8795-efe1c22ba2dd -O zssk_gtfs.zip
-
-      - name: Unzip ZSSK
-        run: unzip zssk_gtfs.zip -d zssk_gtfs
-
-      - name: Pfaedle ZSSK
-        run: ./pfaedle/build/pfaedle -x railonly-europe-latest.osm.pbf zssk_gtfs -F --inplace --mots rail --drop-shapes true
-
-      - name: Zip ZSSK
-        run: zip -9 -r zssk_gtfs-pfaedle.zip zssk_gtfs/*
-
-      - name: Upload Asset ZSSK
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITUHB_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
-          ASSET_PATH: zssk_gtfs-pfaedle.zip # Replace with the actual path to your file
-          RELEASE_TAG: latest
-        run: |
-          echo "Uploading asset: $ASSET_PATH to release latest"
-          gh release upload latest "$ASSET_PATH" --clobber
-        shell: bash
-        if: env.ASSET_PATH != ''
-
       - name: Name download Flix EU
         uses: wei/wget@v1
         with:
