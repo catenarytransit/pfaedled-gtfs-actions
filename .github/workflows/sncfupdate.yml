@@ -33,7 +33,7 @@ jobs:
         id: calculate_SNCF_GTFS_MD5
         run: |
           filepath="${{ steps.download_sncf_gtfs.outputs.SNCF_GTFS_FILE }}"
-          md5_hash=$(md5sum "$filepath" | awk '{print $1}')
+          md5_hash=$( { md5sum "$filepath"; sha256sum split_sncf_bus_routes.py; } | md5sum | awk '{print $1}')
           echo "SNCF_GTFS_MD5=$md5_hash" >> $GITHUB_OUTPUT
           echo "SNCF_GTFS_MD5_FILE=$filepath.md5" >> $GITHUB_OUTPUT
           echo "$md5_hash" > "$filepath.md5"
@@ -79,6 +79,10 @@ jobs:
         if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
         run: |
           unzip Export_OpenData_SNCF_GTFS_NewTripId.zip -d sncf
+
+      - name: Split SNCF bus trips from mixed-mode rail routes
+        if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
+        run: python3 split_sncf_bus_routes.py sncf
 
       - name: Run pfaedle SNCF
         if: steps.download_existing_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5_EXISTS == 'false' || steps.calculate_SNCF_GTFS_MD5.outputs.SNCF_GTFS_MD5 != steps.download_existing_SNCF_GTFS_MD5.outputs.EXISTING_SNCF_GTFS_MD5
