@@ -23,6 +23,9 @@ jobs:
       - name: install cmake and gcc
         run: sudo apt install cmake gcc
 
+      - name: Test SNCF route normalization
+        run: python3 -m unittest -v test_split_sncf_bus_routes
+
       - name: Download SNCF files
         id: download_sncf_gtfs
         run: |
